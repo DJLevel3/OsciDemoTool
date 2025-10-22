@@ -101,6 +101,7 @@
       <AssemblerListingLocation>$(OutDir)</AssemblerListingLocation>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -216,7 +217,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /COMPMODE:INSTANT /REPORT:.\exe\out.html %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/CRINKLER /COMPMODE:SLOW /REPORT:.\exe\out.html %(AdditionalOptions)</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />

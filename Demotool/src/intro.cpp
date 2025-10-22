@@ -7,26 +7,27 @@
 //---------------------------------------------------------------------
 #define NOFF -128
 
-#define CUBE_CROSS_LINES
+const static char objects[] = {
+    0, 6,
+};
 
-#ifdef CUBE_CROSS_LINES
-#define CUBE_NUM_STROKES 6
-#else
-#define CUBE_NUM_STROKES 4
-#endif
-const static char cubeIndices[] = {
-    3, 2, 5, 4, 3,
-    7, 6, 1, 0, 7,
-#ifdef CUBE_CROSS_LINES
-    0, 6, 4, 2, 0,
+const static char vertIndices[] = {
+     3,  2,  5,  4,  3,
+     7,  6,  1,  0,  7,
+     0,  6,  4,  2,  0,
+     3,  4,  7,  0,  3,
+     1,  6,  5,  2,  1,
+     0,  6,  4,  2,  0, // 5 - end of cube
+
+#ifdef OCTA
+    10,  9, 11,  8, 10,
+    12, 11, 13, 10, 12,
+     9, 12,  8, 13,  9, // 8 - end of octahedron
+    12, 11, 13, 10, 12,
+    10,  9, 11,  8, 10,
+     8, 13,  9, 12,  8 // 11 - end of octahedron 2
 #endif
 
-    3, 4, 7, 0, 3,
-    1, 6, 5, 2, 1,
-
-#ifdef CUBE_CROSS_LINES
-    0, 6, 4, 2, 0
-#endif
     //0, 1, 2, 3, 0,
     //4, 5, 6, 7, 4,
 };
@@ -42,8 +43,26 @@ static float verts[] = {
   1.0f,  1.0f,  1.0f, // 6
   1.0f, -1.0f,  1.0f, // 7
 
-//  0.0f,  0.0f,  0.0f, // 8
+#ifdef OCTA
+  0.0f,  0.0f,  0.0f, // 8  (placeholder) - back
+  0.0f,  0.0f,  0.0f, // 9  (placeholder) - front
+  0.0f,  0.0f,  0.0f, // 10 (placeholder) - bottom
+  0.0f,  0.0f,  0.0f, // 11 (placeholder) - top
+  0.0f,  0.0f,  0.0f, // 12 (placeholder) - left
+  0.0f,  0.0f,  0.0f, // 13 (placeholder) - right
+#endif
 };
+
+#ifdef OCTA
+static float sourceVerts[] = {
+  0.0f,  0.0f,  -1.5f, // 8  - back
+  0.0f,  0.0f,   1.5f, // 9  - front
+  0.0f, -1.5f,   0.0f, // 10 - bottom
+  0.0f,  1.5f,   0.0f, // 11 - top
+ -1.5f,  0.0f,   0.0f, // 12 - left
+  1.5f,  0.0f,   0.0f, // 13 - right
+};
+#endif
 
 static const float pitchChangeTimes[] = {
     0.25,
@@ -87,6 +106,7 @@ static const char notes[] = {
    43
 };
 
+/*
 static const char pulseNotes[] = {
     NOFF,
     0,
@@ -104,6 +124,79 @@ static const char pulseNotes[] = {
     3,
     2,
     -2,
+};*/
+
+static const char pulseNotes[] = {
+    NOFF,
+    57,
+    60,
+    NOFF,
+    NOFF,
+    55,
+    59,
+    55,
+    NOFF,
+    53,
+    57,
+    53,
+    55,
+    60,
+    59,
+    55,
+};
+
+static const char pulseNotes2[] = {
+    NOFF,
+    NOFF,
+    57,
+    60,
+    64,
+    NOFF,
+    NOFF,
+    NOFF,
+    NOFF,
+    NOFF,
+    55,
+    59,
+    62,
+    NOFF,
+    59,
+    NOFF,
+    NOFF,
+    NOFF,
+    53,
+    57,
+    60,
+    NOFF,
+    57,
+    NOFF,
+    59,
+    NOFF,
+    60,
+    NOFF,
+    59,
+    NOFF,
+    55,
+    NOFF,
+};
+
+static const char pulseNotes3[] = {
+    52,
+    52,
+    57,
+    52,
+    50,
+    50,
+    55,
+    50,
+    48,
+    48,
+    53,
+    48,
+    50,
+    50,
+    55,
+    50,
 };
 
 static const unsigned short kickPattern = 0b1001101010001000;
@@ -111,9 +204,12 @@ static const unsigned short kickPattern = 0b1001101010001000;
 #define OPENHAT_SAMPLES (16000)
 #define OPENHAT_RATE (96000)
 
-#define PULSE_WIDTH 0.1f
+#define PULSE_WIDTH p0d10
 #define PULSE_FREQ_BASE 27.5f
-#define PULSE_SAMPLES 192000
+#define PULSE_SAMPLES (MZK_RATE * 2)
+
+#define PULSE2_WIDTH p0d05
+#define PULSE2_SAMPLES (MZK_RATE * 5 / 2)
 
 #define HAT_PERIOD0 392
 #define HAT_PERIOD1 314
@@ -126,8 +222,13 @@ short* kickBuf;
 short* snareBuf;
 short* openHatBuf;
 short* pulseBuf;
+short* pulse2Buf;
 
-float rotMatrix[16];
+float rotMatrix1[16];
+#ifdef OCTA
+float rotMatrix2[16];
+float rotMatrix3[16];
+#endif
 
 int intro_init( void )
 {
@@ -135,9 +236,11 @@ int intro_init( void )
     snareBuf = new short[SNARE_SAMPLES * 2];
     openHatBuf = new short[OPENHAT_SAMPLES * 2];
     pulseBuf = new short[PULSE_SAMPLES * 2];
+    pulse2Buf = new short[PULSE2_SAMPLES * 2];
 
     int seed = 1;
 
+    // kick
 #ifdef SAMPLED_KICK
     for (int i = 0; i < KICK_SAMPLES; i++) {
         kickBuf[i * 2] = kick[i] * KICK_MULTIPLIER;
@@ -164,6 +267,7 @@ int intro_init( void )
     normalizeBuffer(kickBuf + (KICK_FADE_END * 2), KICK_SAMPLES - KICK_FADE_END, KICK_END_V);
 #endif
 
+    // snare
 #ifdef SAMPLED_SNARE
     for (int i = 0; i < SNARE_SAMPLES; i++) {
         snareBuf[i * 2] = snare[i] * SNARE_MULTIPLIER;
@@ -192,6 +296,7 @@ int intro_init( void )
     fadeBuffer(snareBuf + (SNARE_SAMPLES * 4 / 3), SNARE_SAMPLES / 3, 1.f, 0.f);
 #endif
 
+    // hihat
     float state1 = 0;
     float state2 = 0;
     float state3 = 0;
@@ -219,63 +324,94 @@ int intro_init( void )
     fadeBuffer(openHatBuf, OPENHAT_SAMPLES, p0d50, p0d00);
 
     int pw;
-    int oneCycle = (int(MZK_RATE / PULSE_FREQ_BASE + 0.5));
-    for (pw = 0; pw < (MZK_RATE / PULSE_FREQ_BASE) * PULSE_WIDTH * 2; pw++) {
-        pulseBuf[pw] = f2i((PULSE_WIDTH - 1) * 32767);
-    }for (; pw < oneCycle * 2; pw++) {
-        pulseBuf[pw] = f2i(PULSE_WIDTH * 32767);
-    }
-    for (; pw < PULSE_SAMPLES * 2; pw++) {
-        pulseBuf[pw] = 0;
-    }
-    for (int i = 1; i * oneCycle < PULSE_SAMPLES; i++) {
-        addSamples(pulseBuf + (oneCycle * i), pulseBuf, oneCycle, 1);
+    int oneCycle = (f2i(0.5f * MZK_RATE / PULSE_FREQ_BASE));
+
+    // first pulse buffer
+    for (pw = 0; pw < PULSE_SAMPLES; pw++) {
+        pulseBuf[pw * 2] = SHRT_MAX * squareWave(pw, oneCycle, PULSE_WIDTH);
+        pulseBuf[pw * 2 + 1] = pulseBuf[pw * 2];
     }
     fadeBuffer(pulseBuf, PULSE_SAMPLES, p0d25, p0d00);
     fadeBuffer(pulseBuf, PULSE_SAMPLES / 2, p1d99, p1d00);
 
-    eulerMat(rotMatrix, p0d03, p0d02, p0d05);
+    // second pulse buffer
+    for (pw = 0; pw < PULSE_SAMPLES; pw++) {
+        pulse2Buf[pw * 2] = SHRT_MAX * squareWave(pw, oneCycle, PULSE2_WIDTH);
+        pulse2Buf[pw * 2 + 1] = pulse2Buf[pw * 2];
+    }
+    fadeBuffer(pulse2Buf, PULSE2_SAMPLES, p0d25, p0d00);
+    fadeBuffer(pulse2Buf, PULSE2_SAMPLES / 2, p1d99, p1d00);
+
+    // cube rotation
+    eulerMat(rotMatrix1, p0d03, p0d02, p0d05);
+#ifdef OCTA
+    eulerMat(rotMatrix2, 0, p0d07, 0);
+    eulerMat(rotMatrix3, p0d50, 0, -p0d79);
+#endif
     return 1;
 }
 
 void intro_do( long itime , short * buffer )
 {
-    int s;
+    int s,vi;
     float nextTime = 0;
     int p = 0;
 
+    unsigned char object = 0;
+    int offset = objects[2 * object];
+    int nStrokes = objects[2 * object + 1];
     float nSPC = f2i(MZK_RATE / mn2f<const char>(notes[0]));
-    int nSPS = f2i(nSPC / CUBE_NUM_STROKES);
-    int correction = f2i(nSPC - (CUBE_NUM_STROKES * nSPS));
+    int nSPS = f2i(nSPC / nStrokes);
+    int correction = f2i(nSPC - (nStrokes * nSPS));
     nextTime += pitchChangeTimes[p];
 
-    float* curFace = new float[15];
+    float* curStroke = new float[15];
     for (s = 0; s + nSPC < DEMO_NUMSAMPLES;) {
-        // generate
-        for (int i = 0; i < CUBE_NUM_STROKES; i += 1) {
+        // generate the shape
+        for (int i = 0; i < nStrokes; i += 1) {
             for (int v = 0; v < 5; v++) {
-                curFace[v * 3 + 0] = verts[cubeIndices[i * 5 + v] * 3 + 0];
-                curFace[v * 3 + 1] = verts[cubeIndices[i * 5 + v] * 3 + 1];
-                curFace[v * 3 + 2] = verts[cubeIndices[i * 5 + v] * 3 + 2];
+#ifdef OCTA
+                vi = vertIndices[(i + offset) * 5 + v] * 3;
+#else
+                vi = vertIndices[i * 5 + v] * 3;
+#endif
+                curStroke[v * 3 + 0] = verts[vi + 0];
+                curStroke[v * 3 + 1] = verts[vi + 1];
+                curStroke[v * 3 + 2] = verts[vi + 2];
             }
-            strokeToCycle(curFace, 5, buffer + (2 * s), nSPS);
+            strokeToCycle(curStroke, 5, buffer + (2 * s), nSPS);
             s += nSPS;
         }
         for (int i = 0; i < correction; i++) {
-            buffer[2 * s - 2] = buffer[2 * s];
-            buffer[2 * s - 1] = buffer[2 * s + 1];
+            buffer[2 * s] = buffer[2 * s - 2];
+            buffer[2 * s + 1] = buffer[2 * s - 1];
             s++;
         }
-        for (int i = 0; i < 24; i+=3) {
-            mvp43(rotMatrix, verts + i, verts + i);
+        for (int i = 0; i < 8; i++) {
+            mvp43(rotMatrix1, verts + (i * 3), verts + (i * 3));
         }
+#ifdef OCTA
+        for (int i = 0; i < 6; i++) {
+            mvp43(rotMatrix2, sourceVerts + (i * 3), sourceVerts + (i * 3));
+            mvp43(rotMatrix3, sourceVerts + (i * 3), verts + ((i + 8) * 3));
+        }
+
+        object = (s < DEMO_NUMSAMPLES / 2) ? 1 : ((s * 2 / MZK_RATE) % 2);
+        offset = objects[2 * object];
+        nStrokes = objects[2 * object + 1];
+
+        nSPC = MZK_RATE / mn2f<const char>(notes[p % 24]);
+        nSPS = f2i(nSPC / nStrokes);
+        correction = f2i(nSPC - (nStrokes * nSPS));
+#endif
+
         while (s > MZK_RATE * nextTime) {
             p++;
+            nextTime += pitchChangeTimes[p % 12];
             // check pitch and shit
             nSPC = MZK_RATE / mn2f<const char>(notes[p % 24]);
-            nSPS = f2i(nSPC / CUBE_NUM_STROKES);
-            correction = f2i(nSPC - (CUBE_NUM_STROKES * nSPS));
-            nextTime += pitchChangeTimes[p % 12];
+            nSPS = f2i(nSPC / nStrokes);
+            correction = f2i(nSPC - (nStrokes * nSPS));
         }
     }
     for (; s < DEMO_NUMSAMPLES; s++) {
@@ -283,39 +419,48 @@ void intro_do( long itime , short * buffer )
         buffer[s * 2 + 1] = 0;
     }
     normalizeBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
-    delete[] curFace;
+    delete[] curStroke;
 
     
     // sidechain
-    for (int i = 0; i < 256; i++) {
-        if (i < 64) {
+    for (int i = 0; i < 258; i++) {
+        if (i % 64 == 62) {
+            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
+        } else if (i < 64) {
             if (i % 4 == 0) fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
         } else if ((kickPattern & 1 << (15 - (i % 16)))) {
             fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
         }
-        else if (((i - 4) % 8 == 0) && i >= 68 && i < 248) {
-            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 15000, p0d50, p1d00);
-        }
     }
-    for (int i = 368; i < 480; i ++) {
-        if ((kickPattern & 1 << (15 - (i % 16)))) {
+    for (int i = 324; i < 368; i += 8) {
+        fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d50, p1d00);
+    }
+    for (int i = 368; i < 476; i ++) {
+        if (i % 64 == 62) {
+            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
+        } else if (i < 384) {
+            if (i % 4 == 0) fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
+        } else if ((kickPattern & 1 << (15 - (i % 16)))) {
             fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
         }
-        else if (((i - 4) % 8 == 0)) {
-            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 15000, p0d50, p1d00);
-        }
     }
 
-
-    for (int i = 0; i < 256; i ++) {
-        if (i < 64) {
+    // kick drums
+    for (int i = 0; i < 258; i ++) {
+        if (i % 64 == 62) {
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
+        } else if (i < 64) {
             if (i % 4 == 0) addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
         } else if ((kickPattern & 1 << (15 - (i % 16)))) {
             addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
         }
     }
-    for (int i = 368; i < 480; i ++) {
-        if ((kickPattern & 1 << (15 - (i % 16)))) {
+    for (int i = 368; i < 476; i ++) {
+        if (i % 64 == 62) {
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
+        } else if (i < 384) {
+            if (i % 4 == 0) addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
+        } else if ((kickPattern & 1 << (15 - (i % 16)))) {
             addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
         }
     }
@@ -328,12 +473,6 @@ void intro_do( long itime , short * buffer )
         addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, MZK_RATE / SNARE_RATE);
     }
 
-    /*
-    // closed hihats
-    for (int i = 0; i < DEMO_DURATION * 8; i += 1) {
-        addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, openHatBuf + 3 * OPENHAT_SAMPLES / 4, OPENHAT_SAMPLES / 8, MZK_RATE / OPENHAT_RATE);
-    }/**/
-
     // open hihats
     for (int i = 130; i < 248; i += 4) {
         addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, openHatBuf, OPENHAT_SAMPLES, MZK_RATE / OPENHAT_RATE);
@@ -344,10 +483,35 @@ void intro_do( long itime , short * buffer )
 
     // Pulse stabs
     float f;
-    for (int i = 0; i < 144; i += 1) {
-        if (pulseNotes[i % 16] > -64) {
-            f = mn2f<const char>(pulseNotes[i % 16] + 57);
-            addSamples(buffer + ((MZK_RATE >> 2) * (i + 96)) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
+    int n;
+    int i;
+    for (i = 192; i < 256; i += 2) {
+        n = ((i - 192) >> 1) % 16;
+        if (pulseNotes[n] != NOFF) {
+            f = mn2f<const char>(pulseNotes[n]);
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
+        }
+    }
+    for (i = 256; i < 384; i++) {
+        n = (i - 256) % 32;
+        if (pulseNotes2[n] != NOFF) {
+            f = mn2f<const char>(pulseNotes2[n]);
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
+        }
+    }
+    for (i = 384; i < 480; i += 2) {
+        n = ((i - 384) >> 1) % 16;
+        if (pulseNotes[n] != NOFF) {
+            f = mn2f<const char>(pulseNotes[n]);
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
+        }
+    }
+
+    for (i = 256; i < 506; i += 2) {
+        n = ((i - 256) >> 1) % 16;
+        if (pulseNotes3[n] != NOFF) {
+            f = mn2f<const char>(pulseNotes3[n]);
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulse2Buf, PULSE2_SAMPLES, PULSE_FREQ_BASE / f);
         }
     }
 }
@@ -357,4 +521,5 @@ void intro_end() {
     delete[] snareBuf;
     delete[] openHatBuf;
     delete[] pulseBuf;
+    delete[] pulse2Buf;
 }
