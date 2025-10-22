@@ -233,12 +233,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp" />
-    <ClCompile Include="src\main_win_deb.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_AudioSave|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\main_win_rel.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\tool.cpp" />
   </ItemGroup>
