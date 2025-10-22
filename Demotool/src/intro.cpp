@@ -106,6 +106,8 @@ static const char pulseNotes[] = {
     -2,
 };
 
+static const unsigned short kickPattern = 0b1001101010001000;
+
 #define OPENHAT_SAMPLES (16000)
 #define OPENHAT_RATE (96000)
 
@@ -284,25 +286,45 @@ void intro_do( long itime , short * buffer )
     delete[] curFace;
 
     
-    // sidechain/kick
-    for (int i = 0; i < 256; i += 4) {
-        fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 30000, p0d10, p1d00);
-        addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
+    // sidechain
+    for (int i = 0; i < 256; i++) {
+        if (i < 64) {
+            if (i % 4 == 0) fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
+        } else if ((kickPattern & 1 << (15 - (i % 16)))) {
+            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
+        }
+        else if (((i - 4) % 8 == 0) && i >= 68 && i < 248) {
+            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 15000, p0d50, p1d00);
+        }
     }
-    for (int i = 368; i < 480; i += 4) {
-        fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 30000, p0d10, p1d00);
-        addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
-    }/**/
+    for (int i = 368; i < 480; i ++) {
+        if ((kickPattern & 1 << (15 - (i % 16)))) {
+            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 20000, p0d30, p1d00);
+        }
+        else if (((i - 4) % 8 == 0)) {
+            fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 15000, p0d50, p1d00);
+        }
+    }
+
+
+    for (int i = 0; i < 256; i ++) {
+        if (i < 64) {
+            if (i % 4 == 0) addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
+        } else if ((kickPattern & 1 << (15 - (i % 16)))) {
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
+        }
+    }
+    for (int i = 368; i < 480; i ++) {
+        if ((kickPattern & 1 << (15 - (i % 16)))) {
+            addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, MZK_RATE / KICK_RATE);
+        }
+    }
 
     // snare drums
     for (int i = 68; i < 248; i += 8) {
         addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, MZK_RATE / SNARE_RATE);
     }
-    for (int i = 324; i < 368; i += 8) {
-        fadeBuffer(buffer + ((MZK_RATE >> 3) * i) * 2, 30000, p0d30, p1d00);
-        addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, MZK_RATE / SNARE_RATE);
-    }
-    for (int i = 372; i < 480; i += 8) {
+    for (int i = 324; i < 480; i += 8) {
         addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, MZK_RATE / SNARE_RATE);
     }
 
@@ -325,7 +347,7 @@ void intro_do( long itime , short * buffer )
     for (int i = 0; i < 144; i += 1) {
         if (pulseNotes[i % 16] > -64) {
             f = mn2f<const char>(pulseNotes[i % 16] + 57);
-            addSamples(buffer + ((MZK_RATE >> 2) * (i + 96)) * 2, pulseBuf, PULSE_SAMPLES, 27.5f / f);
+            addSamples(buffer + ((MZK_RATE >> 2) * (i + 96)) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
         }
     }
 }

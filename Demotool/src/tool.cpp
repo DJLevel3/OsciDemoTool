@@ -99,12 +99,12 @@ void addSamples(short* buffer, short* toAdd, int samples, float stretch)
     int l, r;
     for (int i = 0; i < f2i(samples * stretch); i++) {
         l = buffer[i * 2] + toAdd[f2i(i / stretch) * 2];
-        l = (l > 32767 ? 32767 : l);
-        l = (l < -32768 ? -32768 : l);
+        l = (l > SHRT_MAX ? SHRT_MAX : l);
+        l = (l < SHRT_MIN ? SHRT_MIN : l);
 
         r = buffer[i * 2 + 1] + toAdd[f2i(i / stretch) * 2 + 1];
-        r = (r > 32767 ? 32767 : r);
-        r = (r < -32768 ? -32768 : r);
+        r = (r > SHRT_MAX ? SHRT_MAX : r);
+        r = (r < SHRT_MIN ? SHRT_MIN : r);
 
         buffer[i * 2] = l;
         buffer[i * 2 + 1] = r;

@@ -9,7 +9,6 @@
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 #endif
-#include <cmath>
 #include "system.h"
 
 #define MZK_RATE        96000
@@ -36,6 +35,6 @@ static float vec3Distance(float* vec3A, float* vec3B);
 
 #define SCRATCH_SIZE 1024
 static float renderer_scratch[SCRATCH_SIZE];
-int scSP = 0;
+static int scSP = 0;
 
 #endif

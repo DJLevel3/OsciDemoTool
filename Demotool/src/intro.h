@@ -10,7 +10,6 @@
 #define WIN32_EXTRA_LEAN
 #endif
 #include <windows.h>
-#include <cmath>
 #include "system.h"
 #include "tool.h"
 
