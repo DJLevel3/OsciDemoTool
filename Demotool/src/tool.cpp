@@ -9,8 +9,8 @@ void mzk_init( short *buffer )
 {
     for( int i=0; i<INTROMUSIC_NUMSAMPLES; i++ ) 
     {
-        buffer[2 * i + 0] = f2i(16384.f * sinf(6.2831f * (0.0011458333f * (float)i)));
-        buffer[2 * i + 1] = f2i(16384.f * sinf(6.2831f * (0.0023020834f * (float)i)));
+        buffer[2 * i + 0] = f2i(16384 * sinf(p0d01 * (i * 1001 / 500)));
+        buffer[2 * i + 1] = f2i(16384 * sinf(p0d01 * (i * 3)));
     }
 }
 

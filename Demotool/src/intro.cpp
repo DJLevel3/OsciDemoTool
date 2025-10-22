@@ -5,19 +5,22 @@
 #include "intro.h"
 
 //---------------------------------------------------------------------
-#define NOFF -128
+#define NOFF 0
 
 const static char objects[] = {
+#ifdef OCTA
+    6, 6,
+#endif
     0, 6,
 };
 
 const static char vertIndices[] = {
+     0,  6,  4,  2,  0,
      3,  2,  5,  4,  3,
      7,  6,  1,  0,  7,
      0,  6,  4,  2,  0,
      3,  4,  7,  0,  3,
-     1,  6,  5,  2,  1,
-     0,  6,  4,  2,  0, // 5 - end of cube
+     1,  6,  5,  2,  1, // 5 - end of cube
 
 #ifdef OCTA
     10,  9, 11,  8, 10,
@@ -106,26 +109,6 @@ static const char notes[] = {
    43
 };
 
-/*
-static const char pulseNotes[] = {
-    NOFF,
-    0,
-    3,
-    NOFF,
-    NOFF,
-    -2,
-    2,
-    -2,
-    NOFF,
-    -4,
-    0,
-    -4,
-    -2,
-    3,
-    2,
-    -2,
-};*/
-
 static const char pulseNotes[] = {
     NOFF,
     57,
@@ -208,7 +191,7 @@ static const unsigned short kickPattern = 0b1001101010001000;
 #define PULSE_FREQ_BASE 27.5f
 #define PULSE_SAMPLES (MZK_RATE * 2)
 
-#define PULSE2_WIDTH p0d05
+#define PULSE2_WIDTH p0d95
 #define PULSE2_SAMPLES (MZK_RATE * 5 / 2)
 
 #define HAT_PERIOD0 392
@@ -255,7 +238,7 @@ int intro_init( void )
         kSPC = MZK_RATE / kFreq;
         for (kSamp = 0; kSamp < kSPC && i < KICK_SAMPLES; kSamp++) {
             kickBuf[i * 2] = f2i(32768.f * squareWave(kSamp, kSPC, p0d40));
-            kickBuf[i * 2 + 1] = f2i(32768.f * squareWave(kSamp + f2i(kSPC / 4), kSPC, p0d40));
+            kickBuf[i * 2 + 1] = f2i(32768.f * squareWave(kSamp + f2i(kSPC * 0.25f), kSPC, p0d40));
             i++;
         }
         if (kFreq > KICK_FBASE) kFreq -= KICK_FSTEP;
@@ -283,9 +266,9 @@ int intro_init( void )
         sSPC = MZK_RATE / sFreq;
         sSamp = 0;
         for (sSamp = 0; sSamp < sSPC && i < SNARE_SAMPLES; sSamp++) {
-            if (sSamp % 6 == 0) n = 0.8 * (short(demo_rand(&seed)) * powf(min(max((float)i - SNARE_WIREWAIT, 0), (float)SNARE_WIRETIME) / (SNARE_WIRETIME), 2.0f));
+            if (sSamp % 6 == 0) n = p0d80 * (short(demo_rand(&seed)) * powf(min(max((float)i - SNARE_WIREWAIT, 0), (float)SNARE_WIRETIME) / (SNARE_WIRETIME), 2.0f));
             snareBuf[i * 2] = f2i(32768.f * squareWave(sSamp, sSPC, p0d60));
-            snareBuf[i * 2 + 1] = (i < SNARE_WIREWAIT ? 1.8 : 0.8) * snareBuf[i * 2] + f2i((snareBuf[i * 2] * 0.5 + 16384.f) * n / 16384);
+            snareBuf[i * 2 + 1] = (i < SNARE_WIREWAIT ? p1d80 : p0d80) * snareBuf[i * 2] + f2i((snareBuf[i * 2] * 0.5 + 16384.f) * n / 16384);
             snareBuf[i * 2] = snareBuf[i * 2 + 1];
             i++;
         }
@@ -360,7 +343,7 @@ void intro_do( long itime , short * buffer )
     unsigned char object = 0;
     int offset = objects[2 * object];
     int nStrokes = objects[2 * object + 1];
-    float nSPC = f2i(MZK_RATE / mn2f<const char>(notes[0]));
+    float nSPC = f2i(MZK_RATE / mn2f(notes[0]));
     int nSPS = f2i(nSPC / nStrokes);
     int correction = f2i(nSPC - (nStrokes * nSPS));
     nextTime += pitchChangeTimes[p];
@@ -400,7 +383,7 @@ void intro_do( long itime , short * buffer )
         offset = objects[2 * object];
         nStrokes = objects[2 * object + 1];
 
-        nSPC = MZK_RATE / mn2f<const char>(notes[p % 24]);
+        nSPC = MZK_RATE / mn2f(notes[p % 24]);
         nSPS = f2i(nSPC / nStrokes);
         correction = f2i(nSPC - (nStrokes * nSPS));
 #endif
@@ -409,7 +392,7 @@ void intro_do( long itime , short * buffer )
             p++;
             nextTime += pitchChangeTimes[p % 12];
             // check pitch and shit
-            nSPC = MZK_RATE / mn2f<const char>(notes[p % 24]);
+            nSPC = MZK_RATE / mn2f(notes[p % 24]);
             nSPS = f2i(nSPC / nStrokes);
             correction = f2i(nSPC - (nStrokes * nSPS));
         }
@@ -488,21 +471,21 @@ void intro_do( long itime , short * buffer )
     for (i = 192; i < 256; i += 2) {
         n = ((i - 192) >> 1) % 16;
         if (pulseNotes[n] != NOFF) {
-            f = mn2f<const char>(pulseNotes[n]);
+            f = mn2f(pulseNotes[n]);
             addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
         }
     }
-    for (i = 256; i < 384; i++) {
+    for (i = 256; i < 448; i++) {
         n = (i - 256) % 32;
         if (pulseNotes2[n] != NOFF) {
-            f = mn2f<const char>(pulseNotes2[n]);
+            f = mn2f(pulseNotes2[n]);
             addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
         }
     }
-    for (i = 384; i < 480; i += 2) {
+    for (i = 448; i < 496; i += 2) {
         n = ((i - 384) >> 1) % 16;
         if (pulseNotes[n] != NOFF) {
-            f = mn2f<const char>(pulseNotes[n]);
+            f = mn2f(pulseNotes[n]);
             addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulseBuf, PULSE_SAMPLES, PULSE_FREQ_BASE / f);
         }
     }
@@ -510,7 +493,7 @@ void intro_do( long itime , short * buffer )
     for (i = 256; i < 506; i += 2) {
         n = ((i - 256) >> 1) % 16;
         if (pulseNotes3[n] != NOFF) {
-            f = mn2f<const char>(pulseNotes3[n]);
+            f = mn2f(pulseNotes3[n]);
             addSamples(buffer + ((MZK_RATE >> 3) * i) * 2, pulse2Buf, PULSE2_SAMPLES, PULSE_FREQ_BASE / f);
         }
     }

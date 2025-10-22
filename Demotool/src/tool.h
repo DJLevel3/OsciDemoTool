@@ -28,7 +28,7 @@ void fadeBuffer(short* buffer, int samples, float start, float end);
 static float squareWave(int t, int period, float pulseWidth) {
     return ((t % period) <= pulseWidth * period) ? (pulseWidth - 1) : (pulseWidth);
 }
-template <typename T> static float mn2f(const T n) {
+static float mn2f(const char n) {
     return 261.63 * powf(2.0f, (n - 60) / 12.f);
 }
 static float vec3Distance(float* vec3A, float* vec3B);

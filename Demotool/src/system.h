@@ -13,15 +13,6 @@ static inline int f2i(float x) // use this to convert float to int, or use /QIfi
     _asm fistp dword ptr[tmp];
     return tmp;
 }
-/*
-static inline int mysinf(float x)
-{
-    int tmp;
-    _asm fld dword ptr[x]
-    _asm fsin
-    _asm fstp dword ptr[tmp];
-    return tmp;
-}*/
 
 static inline int demo_rand(int* seed)
 {
