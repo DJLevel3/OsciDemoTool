@@ -5,20 +5,20 @@
 #ifndef _TOOL_H_
 #define _TOOL_H_
 
+#include "config.h"
+
 #ifndef SAVE_FILE
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 #endif
 #include "system.h"
 
-#define MZK_RATE        96000
-#define MZK_NUMCHANNELS 2
-
+#ifdef LISSAJOUS_INTRO
 #define INTROMUSIC_DURATION 8
-#define INTROMUSIC_NUMSAMPLES  ((int)(INTROMUSIC_DURATION*MZK_RATE))
-#define INTROMUSIC_NUMSAMPLESC ((int)(INTROMUSIC_NUMSAMPLES*MZK_NUMCHANNELS))
-
+#define INTROMUSIC_NUMSAMPLES  ((int)(INTROMUSIC_DURATION*SAMPLE_RATE))
+#define INTROMUSIC_NUMSAMPLESC ((int)(INTROMUSIC_NUMSAMPLES*2))
 void mzk_init( short *buffer );
+#endif
 void vec3ToSample(float* vec3, short* dest);
 void lineToSamples(float* vec3Start, float* vec3End, short* buffer, int samples);
 bool strokeToCycle(float* points, int nPoints, short* buffer, int samples);

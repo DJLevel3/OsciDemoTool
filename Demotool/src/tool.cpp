@@ -4,6 +4,7 @@
 
 #include "tool.h"
 
+#ifdef LISSAJOUS_INTRO
 // loading tune
 void mzk_init( short *buffer )
 {
@@ -13,6 +14,7 @@ void mzk_init( short *buffer )
         buffer[2 * i + 1] = f2i(16384 * sinf(p0d01 * (i * 3)));
     }
 }
+#endif
 
 static float vec3Distance(float* vec3A, float* vec3B)
 {
@@ -67,9 +69,9 @@ bool strokeToCycle(float* points, int nPoints, short* buffer, int samples)
     scSP += nPoints;
 
     // calculate line lengths and total frame distance
-    for (int i = 1; i < nPoints; i++) {
-        lengths[i - 1] = vec3Distance(points + (i - 1) * 3, points + (i * 3));
-        distance += lengths[i - 1];
+    for (int i = 0; i < nPoints - 1; i++) {
+        lengths[i] = vec3Distance(points + i * 3, points + ((i + 1) * 3));
+        distance += lengths[i];
     }
     if (distance <= 0) return false;
 
@@ -78,13 +80,14 @@ bool strokeToCycle(float* points, int nPoints, short* buffer, int samples)
     int bCounter = 0;
     int dS;
 
-    for (int i = 1; i < nPoints; i++) {
-        dS = f2i(lengths[i - 1] * lengthFactor);
-        lineToSamples(points + (i - 1) * 3, points + (i * 3), buffer + (2 * bCounter), dS);
+    for (int i = 0; i < nPoints - 1; i++) {
+        dS = f2i(lengths[i] * lengthFactor);
+        lineToSamples(points + i * 3, points + ((i + 1) * 3), buffer + (2 * bCounter), dS);
         bCounter += dS;
     }
     while (bCounter < samples) {
-        buffer[bCounter] = buffer[bCounter - 2];
+        buffer[bCounter * 2] = buffer[bCounter * 2 - 2];
+        buffer[bCounter * 2 + 1] = buffer[bCounter * 2 - 1];
         bCounter++;
     }
 

@@ -239,7 +239,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHSIZE:200 /HASHTRIES:300 /COMPMODE:SLOW /ORDERTRIES:4000  /UNALIGNCODE /REPORT:.\exe\out.html %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/CRINKLER /HASHTRIES:100 /HASHSIZE:200 /COMPMODE:VERYSLOW /ORDERTRIES:10000  /UNALIGNCODE /REPORT:.\exe\out.html /UNSAFEIMPORT %(AdditionalOptions)</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
@@ -292,15 +292,16 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /COMPMODE:SLOW /REPORT:.\exe\out.html %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/CRINKLER /HASHTRIES:300 /COMPMODE:SLOW /ORDERTRIES:4000  /UNALIGNCODE %(AdditionalOptions)</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\AudioFile.h" />
+    <ClInclude Include="src\config.h" />
     <ClInclude Include="src\fp.h" />
-    <ClInclude Include="src\intro.h" />
+    <ClInclude Include="src\demo.h" />
     <ClInclude Include="src\kick8.h" />
     <ClInclude Include="src\kick_l.h" />
     <ClInclude Include="src\snare.h" />
@@ -308,8 +309,8 @@
     <ClInclude Include="src\system.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\intro.cpp" />
-    <ClCompile Include="src\main_win_rel.cpp">
+    <ClCompile Include="src\demo.cpp" />
+    <ClCompile Include="src\main_entrypoint.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\system.cpp" />

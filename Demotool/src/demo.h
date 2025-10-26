@@ -10,24 +10,22 @@
 #define WIN32_EXTRA_LEAN
 #endif
 #include <windows.h>
+#include "config.h"
 #include "system.h"
 #include "tool.h"
-
-//#define SAMPLED_KICK
-//#define SAMPLED_SNARE
 
 #ifdef SAMPLED_SNARE
 #include "snare.h"
 #else
 #define SNARE_RATE 96000
-#define SNARE_SAMPLES 14000
+#define SNARE_SAMPLES 12000
 
-#define SNARE_FMAX 495
-#define SNARE_FBASE 165
-#define SNARE_FSTEP 20
+#define SNARE_FMAX 330
+#define SNARE_FBASE 110
+#define SNARE_FSTEP 14
 
 #define SNARE_WIREWAIT 2000
-#define SNARE_WIRETIME 5000
+#define SNARE_WIRETIME 10000
 #endif
 
 #ifdef SAMPLED_KICK
@@ -49,12 +47,11 @@
 #define KICK_FADE_END KICK_SAMPLES
 #endif
 
-#define DEMO_DURATION    64
-#define DEMO_NUMSAMPLES  ((int)(DEMO_DURATION*MZK_RATE))
-#define DEMO_NUMSAMPLESC ((int)(DEMO_NUMSAMPLES*MZK_NUMCHANNELS))
+#define DEMO_NUMSAMPLES  ((int)(DEMO_DURATION*SAMPLE_RATE))
+#define DEMO_NUMSAMPLESC ((int)(DEMO_NUMSAMPLES*2))
 
-int  intro_init( void );
-void intro_do( long time, short * buffer );
-void intro_end( void );
+int  demo_init( void );
+void demo_do( long time, short * buffer );
+void demo_end( void );
 
 #endif
