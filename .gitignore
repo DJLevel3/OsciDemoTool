@@ -1,7 +1,11 @@
 .vs
 Demotool/bin
 Demotool/exe
+wav2h/Debug
 wav2h/Release
 wav2h/x64
+gpla2h/Debug
+gpla2h/Release
+Debug/
 archive.zip
 *.zip
