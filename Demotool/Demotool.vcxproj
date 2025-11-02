@@ -298,13 +298,10 @@
     <Bscmake />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\AudioFile.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\fp.h" />
     <ClInclude Include="src\demo.h" />
-    <ClInclude Include="src\kick8.h" />
-    <ClInclude Include="src\kick_l.h" />
-    <ClInclude Include="src\snare.h" />
+    <ClInclude Include="src\miniaudio.h" />
     <ClInclude Include="src\tool.h" />
     <ClInclude Include="src\system.h" />
   </ItemGroup>

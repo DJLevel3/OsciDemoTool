@@ -2,14 +2,8 @@
 // iq / rgba  .  tiny codes  .  2008/2021                                   //
 //--------------------------------------------------------------------------//
 
-//#define USEDSOUND
-//#define CLEANDESTROY          // destroy stuff (windows, glContext, ...)
-
-
-#ifndef SAVE_FILE
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
-#endif
 #include <windows.h>
 #include <mmsystem.h>
 
@@ -33,8 +27,8 @@ static int wavHeader[11] = {
     0x20746D66,
     16,
     WAVE_FORMAT_PCM|(2<<16),
-    SAMPLE_RATE,
-    SAMPLE_RATE*2*sizeof(short),
+    FILE_RATE,
+    FILE_RATE*2*sizeof(short),
     (2*sizeof(short))|((8*sizeof(short))<<16),
     0x61746164,
 #ifdef LISSAJOUS_INTRO
@@ -94,7 +88,7 @@ void entrypoint( void )
 
     t = timeGetTime();
     // wait for key press
-    while (!GetAsyncKeyState(VK_ESCAPE) && timeGetTime() < t + (1000 * DEMO_DURATION) + 1000) Sleep(50);
+    while (!GetAsyncKeyState(VK_ESCAPE) && timeGetTime() < t + (1000 * 120 / BPM * DEMO_DURATION) + 1000) Sleep(50);
     sndPlaySound(0, 0);
 #endif
     demo_end();

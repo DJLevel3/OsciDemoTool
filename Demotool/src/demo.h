@@ -9,7 +9,6 @@
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 #endif
-#include <windows.h>
 #include "config.h"
 #include "system.h"
 #include "tool.h"
@@ -53,5 +52,6 @@
 int  demo_init( void );
 void demo_do( long time, short * buffer );
 void demo_end( void );
+void drums(short* buffer);
 
 #endif

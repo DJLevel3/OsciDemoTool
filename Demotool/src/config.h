@@ -1,8 +1,10 @@
 #pragma once
 
-#define SAMPLE_RATE  96000 // Sample rate to use
+#define FILE_RATE 96000
+#define BPM 128.f
+#define SAMPLE_RATE ((int)(120.f / BPM * FILE_RATE)) // Sample rate to use
 
-#define DEMO_DURATION 64 // Duration in seconds
+#define DEMO_DURATION 64.5 // Duration in seconds
 
 //#define LISSAJOUS_INTRO // Use a lissajous pattern while the demo calculates (roughly 100-150 bytes)
 
