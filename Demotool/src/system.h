@@ -21,10 +21,10 @@ static inline int f2i(float x) // use this to convert float to int, or use /QIfi
 }
 
 
-static inline int demo_rand(int* seed)
+static inline short demo_rand(int* seed)
 {
     seed[0] = seed[0] * 0x343FD + 0x269EC3;
-    return((seed[0] >> 3) & 65535);
+    return seed[0] >> 3;
 }
 
 

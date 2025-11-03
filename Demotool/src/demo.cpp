@@ -55,11 +55,11 @@ static float border[] = {
 
 const static char cubeIndices[] = {
     0, 1, 2, 3, 0,
-    4, 5, 6, 7, 4,
+    5, 6, 7, 4, 5,
+    5, 2, 3, 4, 5,
     0, 1, 6, 7, 0,
-    2, 3, 4, 5, 2,
-    1, 2, 5, 6, 1,
     0, 3, 4, 7, 0,
+    5, 6, 1, 2, 5,
 };
 
 static float cubeVerts[] = {
@@ -315,7 +315,7 @@ int demo_init( int itime )
         sSPC = FILE_RATE / sFreq;
         sSamp = 0;
         for (sSamp = 0; sSamp < sSPC && i < SNARE_SAMPLES; sSamp++) {
-            if (sSamp % 7 == 0) n = short(demo_rand(&seed)) * powf(min(max((float)i - SNARE_WIREWAIT, 0), (float)SNARE_WIRETIME) / (SNARE_WIRETIME), 2.0f);
+            if (sSamp % 7 == 0) n = demo_rand(&seed) * powf(min(max((float)i - SNARE_WIREWAIT, 0), (float)SNARE_WIRETIME) / (SNARE_WIRETIME), 2.0f);
             snareBuf[i * 2] = f2i(0.5f * SHRT_MAX * squareWave(sSamp, f2i(sSPC), p0d60) + n);
             snareBuf[i * 2 + 1] = snareBuf[i * 2];
             i++;
