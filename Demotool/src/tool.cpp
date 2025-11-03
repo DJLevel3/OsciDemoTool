@@ -143,7 +143,7 @@ bool strokeToCycle2D(float* points, int nPoints, short* buffer, int samples)
 
     // deallocate scratch
     scSP -= nPoints;
-
+    
     return true;
 }
 
@@ -170,8 +170,8 @@ float normalizeBuffer(short* buffer, int samples, float volume)
     float value1 = 0;
     float value2 = 0;
     for (int i = 0; i < samples; i++) {
-        value1 = fabsl(buffer[i * 2]);
-        value2 = fabsl(buffer[i * 2 + 1]);
+        value1 = fabsf(buffer[i * 2]);
+        value2 = fabsf(buffer[i * 2 + 1]);
         value1 = (value1 > value2) ? value1 : value2;
         maxValue = (value1 > maxValue) ? value1 : maxValue;
     }
@@ -201,8 +201,8 @@ void wobbleBufferEnv(short* buffer, int samples, float periodT, int phase, float
         x = buffer[i * 2] / (float)SHRT_MAX;
         y = buffer[i * 2 + 1] / (float)SHRT_MAX;
 
-        wx = sin(((i + phase) / periodT + scaleX * y) * 2.f * M_PI);
-        wy = sin(((i + phase) / periodT + scaleY * x) * 2.f * M_PI);
+        wx = sinf(((i + phase) / periodT + scaleX * y) * 2.f * M_PI);
+        wy = sinf(((i + phase) / periodT + scaleY * x) * 2.f * M_PI);
 
         ex = (powf(M_E, -curve * x * x)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));
         ey = (powf(M_E, -curve * y * y)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));
@@ -219,8 +219,8 @@ void wobbleBuffer(short* buffer, int samples, float periodT, int phase, float in
         x = buffer[i * 2] / (float)SHRT_MAX;
         y = buffer[i * 2 + 1] / (float)SHRT_MAX;
 
-        wx = sin(((i + phase) / periodT) * 2.f * M_PI);
-        wy = sin(((i + phase) / periodT) * 2.f * M_PI);
+        wx = sinf(((i + phase) / periodT) * 2.f * M_PI);
+        wy = sinf(((i + phase) / periodT) * 2.f * M_PI);
 
         buffer[i * 2] = min(SHRT_MAX, max(SHRT_MIN, buffer[i * 2] + f2i(wx * intensityX * SHRT_MAX)));
         buffer[i * 2 + 1] = min(SHRT_MAX, max(SHRT_MIN, buffer[i * 2 + 1] + f2i(wy * intensityY * SHRT_MAX)));

@@ -272,10 +272,14 @@ static int seed;
 
 int demo_init( int itime )
 {
-    kickBuf = new short[KICK_SAMPLES * 2];
-    snareBuf = new short[SNARE_SAMPLES * 2];
-    openHatBuf = new short[OPENHAT_SAMPLES * 2];
-    closedHatBuf = new short[CLOSEDHAT_SAMPLES * 2];
+    kickBuf = (short*)malloc(sizeof(short) * KICK_SAMPLES * 2);
+    if (kickBuf == 0) return 0;
+    snareBuf = (short*)malloc(sizeof(short) * SNARE_SAMPLES * 2);
+    if (snareBuf == 0) return 0;
+    openHatBuf = (short*)malloc(sizeof(short) * OPENHAT_SAMPLES * 2);
+    if (openHatBuf == 0) return 0;
+    closedHatBuf = (short*)malloc(sizeof(short) * CLOSEDHAT_SAMPLES * 2);
+    if (closedHatBuf == 0) return 0;
 #ifdef PULSES
     pulseBuf = new short[PULSE_SAMPLES * 2];
     pulse2Buf = new short[PULSE2_SAMPLES * 2];
@@ -290,8 +294,8 @@ int demo_init( int itime )
     for (int i = 0; i < KICK_SAMPLES;) {
         kSPC = FILE_RATE / kFreq;
         for (kSamp = 0; kSamp < kSPC && i < KICK_SAMPLES; kSamp++) {
-            kickBuf[i * 2] = f2i(32768.f * squareWave(kSamp, kSPC, p0d40));
-            kickBuf[i * 2 + 1] = f2i(32768.f * squareWave(kSamp + f2i(kSPC * 0.25f), kSPC, p0d40));
+            kickBuf[i * 2] = f2i(32768.f * squareWave(kSamp, f2i(kSPC), p0d40));
+            kickBuf[i * 2 + 1] = f2i(32768.f * squareWave(kSamp + f2i(kSPC * 0.25f), f2i(kSPC), p0d40));
             i++;
         }
         if (kFreq > KICK_FBASE) kFreq -= KICK_FSTEP;
@@ -312,7 +316,7 @@ int demo_init( int itime )
         sSamp = 0;
         for (sSamp = 0; sSamp < sSPC && i < SNARE_SAMPLES; sSamp++) {
             if (sSamp % 7 == 0) n = short(demo_rand(&seed)) * powf(min(max((float)i - SNARE_WIREWAIT, 0), (float)SNARE_WIRETIME) / (SNARE_WIRETIME), 2.0f);
-            snareBuf[i * 2] = f2i(0.5f * SHRT_MAX * squareWave(sSamp, sSPC, p0d60) + n);
+            snareBuf[i * 2] = f2i(0.5f * SHRT_MAX * squareWave(sSamp, f2i(sSPC), p0d60) + n);
             snareBuf[i * 2 + 1] = snareBuf[i * 2];
             i++;
         }
@@ -343,7 +347,7 @@ int demo_init( int itime )
         state1 += p0d37 * (retval + state1 - 2 * state2);
         state2 += p0d37 * (state1 - state2);
         //state3 += p0d45 * (state2 - state3);
-        openHatBuf[i * 2] = f2i((retval - state2));
+        openHatBuf[i * 2] = f2i(retval - state2);
         openHatBuf[i * 2 + 1] = openHatBuf[i * 2];
         if (i < CLOSEDHAT_SAMPLES) {
             closedHatBuf[i * 2] = openHatBuf[i * 2];
@@ -383,9 +387,10 @@ int demo_init( int itime )
 }
 
 void demo_end() {
-    delete[] kickBuf;
-    delete[] snareBuf;
-    delete[] openHatBuf;
+    free(kickBuf);
+    free(snareBuf);
+    free(openHatBuf);
+    free(closedHatBuf);
 #ifdef PULSES
     delete[] pulseBuf;
     delete[] pulse2Buf;
@@ -410,8 +415,8 @@ void twister(short* buffer) {
     nSPS = nSPC / nStrokes;
     nextTime += SAMPLE_RATE * twisterNoteTimes[p];
 
-    float* twister = new float[3 * TWISTER_SEGMENTS * 4];
-    float* line = new float[6];
+    float* twister = (float*) malloc(sizeof(float) * 3 * TWISTER_SEGMENTS * 4);
+    float* line = (float*) malloc(sizeof(float) * 6);
 
     float twisterHeight = 2.f / TWISTER_SEGMENTS;
     for (int i = 0; i < TWISTER_SEGMENTS; i++) {
@@ -500,13 +505,13 @@ void twister(short* buffer) {
     }
 #ifndef SPIRAL
     wobbleBufferEnv(buffer + 16 * 2 * SAMPLE_RATE, SAMPLE_RATE * 32,   SAMPLE_RATE * 1.5, 0, 0.f,     0.f, 0.4f, 0.0f, 1.f );
-    wobbleBufferEnv(buffer + 50 * 2 * SAMPLE_RATE, SAMPLE_RATE * 14.5, SAMPLE_RATE * 1.5, 0, 2.f / 3, 0.f, 0.4f, 0.0f, 0.5f);
+    wobbleBufferEnv(buffer + 50 * 2 * SAMPLE_RATE, f2i(SAMPLE_RATE * 14.5), SAMPLE_RATE * 1.5, 0, 2.f / 3, 0.f, 0.4f, 0.0f, 0.5f);
     wobbleBufferEnv(buffer + 32 * 2 * SAMPLE_RATE, SAMPLE_RATE * 16,   SAMPLE_RATE,       0, 0.f,     0.f, 0.0f, 0.6f, 1.f );
 #endif
 
     normalizeBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
-    delete[] twister;
-    delete[] line;
+    free(twister);
+    free(line);
 
     twisterDrums(buffer);
 }
@@ -639,7 +644,7 @@ void cube(short* buffer) {
 
     s = 0;
 
-    float* currentStroke = new float[3 * 5];
+    float* currentStroke = (float*)malloc(sizeof(float)* (3 * 5));
 
     for (; s + nSPC + BORDER_SAMPLES < DEMO_NUMSAMPLES;) {
         targetProg += nSPS;
@@ -696,7 +701,7 @@ void cube(short* buffer) {
         }
     }
 
-    delete[] currentStroke;
+    free(currentStroke);
 
     wobbleBufferEnv(buffer + 4 * SAMPLE_RATE * 2, SAMPLE_RATE * 28, SAMPLE_RATE / 2.0f, 0, 2.f / 3, 0.f, 0.1f, 0.0f, 0.5f);
     wobbleBufferEnv(buffer + 4 * SAMPLE_RATE * 2, SAMPLE_RATE * 28, SAMPLE_RATE / 3.0f, 0, 0.f, 2.f / 3, 0.0f, 0.1f, 0.5f);

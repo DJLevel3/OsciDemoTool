@@ -3,10 +3,14 @@
 //--------------------------------------------------------------------------//
 #pragma once
 
-#include "fp.h"
-#define _USE_MATH_DEFINES
+extern "C" {
+#include <stdlib.h>
 #include <math.h>
-#include <cmath>
+}
+#include "fp.h"
+
+#define M_PI 3.14159265358
+#define M_E 2.71828182845904523536
 
 static inline int f2i(float x) // use this to convert float to int, or use /QIfist as additional compiler parameters
 {
@@ -16,11 +20,34 @@ static inline int f2i(float x) // use this to convert float to int, or use /QIfi
     return tmp;
 }
 
+
 static inline int demo_rand(int* seed)
 {
     seed[0] = seed[0] * 0x343FD + 0x269EC3;
     return((seed[0] >> 3) & 65535);
 }
+
+
+#ifndef _DEBUG
+extern "C" {
+    void* memset(void* dst, int val, size_t size)
+    {
+        char* realdst = (char*)dst;
+        for (size_t i = 0; i < size; i++)
+            realdst[i] = (char)val;
+        return dst;
+    }
+
+    void* memcpy(void* dst, const void* src, size_t size)
+    {
+        char* _dst = (char*)dst;
+        const char* _src = (char*)src;
+        for (size_t i = 0; i < size; i++)
+            _dst[i] = _src[i];
+        return dst;
+    }
+}
+#endif
 
 void eulerMat(float* matrix, float x, float y, float z);
 

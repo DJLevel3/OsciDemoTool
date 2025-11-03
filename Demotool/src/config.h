@@ -2,7 +2,7 @@
 
 #define FILE_RATE 96000
 #define BPM 128.f
-#define SAMPLE_RATE ((int)(120.f / BPM * FILE_RATE)) // Sample rate to use
+#define SAMPLE_RATE (int(120.f / BPM * FILE_RATE)) // Sample rate to use
 
 #define PRECALC_SECTION  0
 #define PRECALC_DURATION 2

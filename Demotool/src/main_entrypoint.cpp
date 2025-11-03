@@ -12,7 +12,7 @@
 #include "demo.h"
 #include "tool.h"
 
-//#define SAVE_FILE
+#define SAVE_FILE
 #ifdef SAVE_FILE
 #include <cstdio>
 #include <cstdlib>
@@ -56,7 +56,8 @@ long writePointer;
 
 void entrypoint( void )
 {
-    demoAudioA = new short[SAMPLE_RATE * 2 * AUDIO_SECONDS + 22];
+    demoAudioA = (short*)malloc((SAMPLE_RATE * 2 * AUDIO_SECONDS + 22) * sizeof(short));
+    if (demoAudioA == 0) return;
     memset(demoAudioA + 22, 0, SAMPLE_RATE * 2 * AUDIO_SECONDS * sizeof(short));
 
     float DEMO_DURATION;
@@ -78,22 +79,23 @@ void entrypoint( void )
 
     while (section < DEMO_SECTIONS && !done) {
         DEMO_DURATION = demo_length(section);
-        DEMO_NUMSAMPLESC = DEMO_DURATION * SAMPLE_RATE * 2;
+        DEMO_NUMSAMPLESC = f2i(DEMO_DURATION * SAMPLE_RATE * 2);
 
-        demoBuffer = new short[DEMO_NUMSAMPLESC];
+        demoBuffer = (short*)malloc(DEMO_NUMSAMPLESC * sizeof(short));
+        if (demoBuffer != 0) {
+            t = timeGetTime();
+            demo_do(t, demoBuffer, section);
+            memcpy(demoAudioA + writePointer, demoBuffer, DEMO_NUMSAMPLESC * sizeof(short));
+            writePointer += DEMO_NUMSAMPLESC;
 
-        t = timeGetTime();
-        demo_do(t, demoBuffer, section);
-        memcpy(demoAudioA + writePointer, demoBuffer, DEMO_NUMSAMPLESC * sizeof(short));
-        writePointer += DEMO_NUMSAMPLESC;
+            if (section == 0) {
+                st = timeGetTime();
+                PlaySound((LPCTSTR)demoAudioA, NULL, SND_ASYNC | SND_MEMORY);
+            }
 
-        if (section == 0) {
-            st = timeGetTime();
-            sndPlaySound((const char*)demoAudioA, SND_ASYNC | SND_MEMORY);
+            free(demoBuffer);
         }
         section++;
-
-        delete[] demoBuffer;
         done = GetAsyncKeyState(VK_ESCAPE);
     }
 
@@ -112,7 +114,7 @@ void entrypoint( void )
 
     sndPlaySound(0, 0);
 
-    delete[] demoAudioA;
+    free(demoAudioA);
 
     ExitProcess(0);
 }
