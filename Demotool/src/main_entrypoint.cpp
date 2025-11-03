@@ -7,10 +7,12 @@
 #include <windows.h>
 #include <mmsystem.h>
 
+#include "system.h"
 #include "config.h"
 #include "demo.h"
 #include "tool.h"
 
+//#define SAVE_FILE
 #ifdef SAVE_FILE
 #include <cstdio>
 #include <cstdlib>
@@ -19,22 +21,22 @@
 static int wavHeader[11] = {
     0x46464952,
 #ifdef LISSAJOUS_INTRO
-    INTROMUSIC_NUMSAMPLESC*2+36, 
+    INTROMUSIC_NUMSAMPLESC * 2 + 36,
 #else
-    DEMO_NUMSAMPLESC*2+36,
+    SAMPLE_RATE * 2 * AUDIO_SECONDS + 36,
 #endif
     0x45564157,
     0x20746D66,
     16,
-    WAVE_FORMAT_PCM|(2<<16),
+    WAVE_FORMAT_PCM | (2 << 16),
     FILE_RATE,
-    FILE_RATE*2*sizeof(short),
-    (2*sizeof(short))|((8*sizeof(short))<<16),
+    FILE_RATE * 2 * sizeof(short),
+    (2 * sizeof(short)) | ((8 * sizeof(short)) << 16),
     0x61746164,
 #ifdef LISSAJOUS_INTRO
-    INTROMUSIC_NUMSAMPLESC*sizeof(short)
+    INTROMUSIC_NUMSAMPLESC * sizeof(short)
 #else
-    DEMO_NUMSAMPLESC*sizeof(short)
+    SAMPLE_RATE * 2 * AUDIO_SECONDS * sizeof(short)
 #endif
 };
 
@@ -49,54 +51,68 @@ int  _fltused = 0;
 
 //----------------------------------------------------------------------------
 
+short* demoAudioA;
+long writePointer;
+
 void entrypoint( void )
 {
-#ifdef LISSAJOUS_INTRO
-    short* introtune = new short[INTROMUSIC_NUMSAMPLESC + 22];
+    demoAudioA = new short[SAMPLE_RATE * 2 * AUDIO_SECONDS + 22];
+    memset(demoAudioA + 22, 0, SAMPLE_RATE * 2 * AUDIO_SECONDS * sizeof(short));
 
-    // init loading tone
-    mzk_init( introtune+22 );
-    memcpy( introtune, wavHeader, 44 );
+    float DEMO_DURATION;
+    int DEMO_NUMSAMPLESC;
 
-    // play loading tone
-    sndPlaySound( (const char*)introtune, SND_ASYNC | SND_MEMORY | SND_LOOP );
-
-    // switch header info to demo
-    wavHeader[1] = DEMO_NUMSAMPLESC + 36;
-    wavHeader[10] = DEMO_NUMSAMPLESC * sizeof(short);
-#endif
-    short* demoAudio = new short[DEMO_NUMSAMPLESC + 22];
-    memcpy(demoAudio, wavHeader, 44);
-
-    // init and build the demo
-    if (!demo_init()) return;
+    bool done = 0;
     long t = timeGetTime();
-    demo_do(t, demoAudio + 22);
+    long st = 0;
+    // init and build the demo
+    if (!demo_init(t)) return;
+    int section = 0;
+    
+    short* demoBuffer;
 
-#ifdef LISSAJOUS_INTRO
-    sndPlaySound(0, 0);
-    Sleep(1000);
-#endif
+    done = GetAsyncKeyState(VK_ESCAPE);
+
+    memcpy(demoAudioA, wavHeader, 44);
+    writePointer = 22;
+
+    while (section < DEMO_SECTIONS && !done) {
+        DEMO_DURATION = demo_length(section);
+        DEMO_NUMSAMPLESC = DEMO_DURATION * SAMPLE_RATE * 2;
+
+        demoBuffer = new short[DEMO_NUMSAMPLESC];
+
+        t = timeGetTime();
+        demo_do(t, demoBuffer, section);
+        memcpy(demoAudioA + writePointer, demoBuffer, DEMO_NUMSAMPLESC * sizeof(short));
+        writePointer += DEMO_NUMSAMPLESC;
+
+        if (section == 0) {
+            st = timeGetTime();
+            sndPlaySound((const char*)demoAudioA, SND_ASYNC | SND_MEMORY);
+        }
+        section++;
+
+        delete[] demoBuffer;
+        done = GetAsyncKeyState(VK_ESCAPE);
+    }
+
+    demo_end();
 
 #ifdef SAVE_FILE
     FILE* oFile = fopen("demo.wav", "wb");
-    fwrite(demoAudio, sizeof(short), DEMO_NUMSAMPLESC + 22, oFile);
+    fwrite(demoAudioA, sizeof(short), SAMPLE_RATE * 2 * AUDIO_SECONDS + 22, oFile);
     fclose(oFile);
-#else
-    // start intro
-    sndPlaySound((const char*)demoAudio, SND_ASYNC | SND_MEMORY);
+#endif
 
-    t = timeGetTime();
-    // wait for key press
-    while (!GetAsyncKeyState(VK_ESCAPE) && timeGetTime() < t + (1000 * 120 / BPM * DEMO_DURATION) + 1000) Sleep(50);
+    while (!done && timeGetTime() < st + 1000 * AUDIO_SECONDS + 500) {
+        Sleep(10);
+        done = GetAsyncKeyState(VK_ESCAPE);
+    }
+
     sndPlaySound(0, 0);
-#endif
-    demo_end();
 
-#ifdef LISSAJOUS_INTRO
-    delete[] introtune;
-#endif
-    delete[] demoAudio;
+    delete[] demoAudioA;
 
     ExitProcess(0);
 }

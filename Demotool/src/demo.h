@@ -46,12 +46,9 @@
 #define KICK_FADE_END KICK_SAMPLES
 #endif
 
-#define DEMO_NUMSAMPLES  ((int)(DEMO_DURATION*SAMPLE_RATE))
-#define DEMO_NUMSAMPLESC ((int)(DEMO_NUMSAMPLES*2))
-
-int  demo_init( void );
-void demo_do( long time, short * buffer );
-void demo_end( void );
-void drums(short* buffer);
+int   demo_init( int itime );
+float demo_length( int section );
+void  demo_do( long time, short * buffer, int section );
+void  demo_end( void );
 
 #endif

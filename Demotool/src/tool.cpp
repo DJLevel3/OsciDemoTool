@@ -201,8 +201,8 @@ void wobbleBufferEnv(short* buffer, int samples, float periodT, int phase, float
         x = buffer[i * 2] / (float)SHRT_MAX;
         y = buffer[i * 2 + 1] / (float)SHRT_MAX;
 
-        wx = sin(((i + phase) / periodT + scaleX * x) * 2.f * M_PI);
-        wy = sin(((i + phase) / periodT + scaleY * y) * 2.f * M_PI);
+        wx = sin(((i + phase) / periodT + scaleX * y) * 2.f * M_PI);
+        wy = sin(((i + phase) / periodT + scaleY * x) * 2.f * M_PI);
 
         ex = (powf(M_E, -curve * x * x)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));
         ey = (powf(M_E, -curve * y * y)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));

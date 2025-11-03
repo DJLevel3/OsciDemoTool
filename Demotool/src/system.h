@@ -29,16 +29,28 @@ void mvp43(float* matrix, float* src, float* dest);
 static void rotY(float* src, float* dest, float theta) {
     float sT = sinf(theta);
     float cT = cosf(theta);
-
-    float x = src[0];
-    float z = src[2];
     
+    float x, y;
     x = cT * src[0] - sT * src[2];
-    z = sT * src[0] + cT * src[2];
+    y = sT * src[0] + cT * src[2];
 
     dest[0] = x;
     dest[1] = src[1];
-    dest[2] = z;
+    dest[2] = y;
+}
+
+static void rotZ(float* src, float* dest, float theta) {
+    float sT = sinf(theta);
+    float cT = cosf(theta);
+
+    float x, y;
+
+    x = cT * src[0] - sT * src[1];
+    y = sT * src[0] + cT * src[1];
+
+    dest[0] = x;
+    dest[1] = y;
+    dest[2] = src[2];
 }
 
 static float view_matrix[16] = {

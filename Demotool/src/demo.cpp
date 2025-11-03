@@ -4,35 +4,65 @@
 
 #include "demo.h"
 
+void twister(short* buffer);
+void twisterDrums(short* buffer);
+
+void cube(short* buffer);
+void cubeDrums(short* buffer);
+
+void demo_do(long itime, short* buffer, int section)
+{
+    int DEMO_NUMSAMPLESC = f2i(demo_length(section) * SAMPLE_RATE * 2);
+    memset(buffer, 0, DEMO_NUMSAMPLESC * sizeof(short));
+    switch (section) {
+    case PRECALC_SECTION:
+        return;
+    case TWISTER_SECTION:
+        return twister(buffer);
+    case CUBE_SECTION:
+        return cube(buffer);
+    case PLASMA_SECTION:
+        return cube(buffer);
+    }
+}
+
+float demo_length(int section)
+{
+    switch (section) {
+    case PRECALC_SECTION:
+        return PRECALC_DURATION;
+    case TWISTER_SECTION:
+        return TWISTER_DURATION;
+    case CUBE_SECTION:
+        return CUBE_DURATION;
+    case PLASMA_SECTION:
+        return CUBE_DURATION;
+    }
+    return 2;
+}
+
 //---------------------------------------------------------------------
 #define NOFF 0
 
-const static char objects[] = {
-    0, 6,
+static float border[] = {
+    -1.f,  1.f, 0.f,
+    -1.f, -1.f, 0.f,
+     1.f, -1.f, 0.f,
+     1.f,  1.f, 0.f,
+    -1.f,  1.f, 0.f,
+    -1.f, -1.f, 0.f,
 };
 
-const static char vertIndices[] = {
-     3,  2,  5,  4,  3,
-     7,  6,  1,  0,  7,
-     0,  6,  4,  2,  0,
-     3,  4,  7,  0,  3,
-     1,  6,  5,  2,  1,
-     0,  6,  4,  2,  0, // 5 - end of cube
-
-#ifdef OCTA
-    10,  9, 11,  8, 10,
-    12, 11, 13, 10, 12,
-     9, 12,  8, 13,  9, // 8 - end of octahedron
-    12, 11, 13, 10, 12,
-    10,  9, 11,  8, 10,
-     8, 13,  9, 12,  8 // 11 - end of octahedron 2
-#endif
-
-    //0, 1, 2, 3, 0,
-    //4, 5, 6, 7, 4,
+const static char cubeIndices[] = {
+    0, 1, 2, 3, 0,
+    4, 5, 6, 7, 4,
+    0, 1, 6, 7, 0,
+    2, 3, 4, 5, 2,
+    1, 2, 5, 6, 1,
+    0, 3, 4, 7, 0,
 };
 
-static float verts[] = {
+static float cubeVerts[] = {
  -1.0f, -1.0f,  1.0f, // 0
  -1.0f,  1.0f,  1.0f, // 1
  -1.0f,  1.0f, -1.0f, // 2
@@ -42,40 +72,10 @@ static float verts[] = {
   1.0f,  1.0f, -1.0f, // 5
   1.0f,  1.0f,  1.0f, // 6
   1.0f, -1.0f,  1.0f, // 7
-  /*
- -1.0f, -1.0f,  1.0f, // 0
- -1.0f,  1.0f,  1.0f, // 1
- -1.0f,  1.0f, -1.0f, // 2
- -1.0f, -1.0f, -1.0f, // 3
-
-  1.0f, -1.0f, -1.0f, // 4
-  1.0f,  1.0f, -1.0f, // 5
-  1.0f,  1.0f,  1.0f, // 6
-  1.0f, -1.0f,  1.0f, // 7
-  */
-#ifdef OCTA
-  0.0f,  0.0f,  0.0f, // 8  (placeholder) - back
-  0.0f,  0.0f,  0.0f, // 9  (placeholder) - front
-  0.0f,  0.0f,  0.0f, // 10 (placeholder) - bottom
-  0.0f,  0.0f,  0.0f, // 11 (placeholder) - top
-  0.0f,  0.0f,  0.0f, // 12 (placeholder) - left
-  0.0f,  0.0f,  0.0f, // 13 (placeholder) - right
-#endif
 };
 
-#ifdef OCTA
-static float sourceVerts[] = {
-  0.0f,  0.0f,  -1.5f, // 8  - back
-  0.0f,  0.0f,   1.5f, // 9  - front
-  0.0f, -1.5f,   0.0f, // 10 - bottom
-  0.0f,  1.5f,   0.0f, // 11 - top
- -1.5f,  0.0f,   0.0f, // 12 - left
-  1.5f,  0.0f,   0.0f, // 13 - right
-};
-#endif
-
-#define N_PITCHES 12
-static const float pitchChangeTimes[N_PITCHES] = {
+#define TWISTER_N_PITCHES 14
+static const float twisterNoteTimes[TWISTER_N_PITCHES] = {
     7.25,
     0.25,
     0.25,
@@ -86,15 +86,19 @@ static const float pitchChangeTimes[N_PITCHES] = {
     0.5,
     1.5,
     0.5,
-    1.75,
+    1.25,
+    0.25,
+    0.25,
     0.25,
 };
 
-static const char notes[N_PITCHES] = {
+static const char twisterNotes[TWISTER_N_PITCHES] = {
    30,
    31,
    30,
    42,
+   30,
+   31,
    30,
    31,
    30,
@@ -104,6 +108,56 @@ static const char notes[N_PITCHES] = {
    30,
    42,
 };
+
+#define CUBE_N_PITCHES 21
+static const float cubeNoteTimes[CUBE_N_PITCHES] = {
+    0.25,
+    0.125,
+    0.125,
+    0.25,
+    0.125,
+    0.25,
+    0.125,
+    0.25,
+    0.125,
+    0.25,
+    0.125,
+    0.25,
+    0.125,
+    0.125,
+    0.25,
+    0.125,
+    0.25,
+    0.125,
+    0.25,
+    0.25,
+    0.25
+};
+
+static const char cubeNotes[CUBE_N_PITCHES] = {
+    30,
+    42,
+    NOFF,
+    37,
+    42,
+    30,
+    NOFF,
+    30,
+    42,
+    30,
+    42,
+    26,
+    38,
+    NOFF,
+    26,
+    38,
+    32,
+    37,
+    32,
+    37,
+    32
+};
+
 #ifdef PULSES
 static const char pulseNotes[] = {
     NOFF,
@@ -179,10 +233,6 @@ static const char pulseNotes3[] = {
 };
 #endif
 
-static const unsigned short kickPattern = 0b1000001000100100;
-static const unsigned int hatPattern =     0b00000000010000000000000001000100;
-static const unsigned int hatRollPattern = 0b00000100000000000000001000000000;
-
 #define OPENHAT_SAMPLES (24000)
 #define CLOSEDHAT_SAMPLES (3000)
 #define HAT_RATE (96000)
@@ -206,22 +256,21 @@ static const unsigned int hatRollPattern = 0b00000100000000000000001000000000;
 #define TWISTER_SEGMENTS 128
 #define TWISTER_WIDTH p0d40
 
-#define BORDER_SAMPLES 400
+#define BORDER_SAMPLES 300
 
 short* kickBuf;
 short* snareBuf;
 short* openHatBuf;
 short* closedHatBuf;
+#ifdef PULSES
 short* pulseBuf;
 short* pulse2Buf;
-
-float rotMatrix1[16];
-#ifdef OCTA
-float rotMatrix2[16];
-float rotMatrix3[16];
 #endif
 
-int demo_init( void )
+float rotMatrix1[16];
+static int seed;
+
+int demo_init( int itime )
 {
     kickBuf = new short[KICK_SAMPLES * 2];
     snareBuf = new short[SNARE_SAMPLES * 2];
@@ -232,7 +281,7 @@ int demo_init( void )
     pulse2Buf = new short[PULSE2_SAMPLES * 2];
 #endif
 
-    int seed = 1;
+    seed = itime;
 
     // kick
     float kFreq = KICK_FMAX;
@@ -330,32 +379,36 @@ int demo_init( void )
     // cube rotation
     eulerMat(rotMatrix1, p0d03, p0d02, p0d05);
 #endif
-
-#ifdef OCTA
-    eulerMat(rotMatrix2, 0, p0d07, 0);
-    eulerMat(rotMatrix3, p0d50, 0, -p0d79);
-#endif
     return 1;
 }
 
-void demo_do(long itime, short* buffer)
-{
-    int s, vi;
-    int rotationCounter;
+void demo_end() {
+    delete[] kickBuf;
+    delete[] snareBuf;
+    delete[] openHatBuf;
+#ifdef PULSES
+    delete[] pulseBuf;
+    delete[] pulse2Buf;
+#endif
+}
+
+const unsigned short kickPattern = 0b1000001000100100;
+const unsigned int hatPattern = 0b00000000010000000000000001000100;
+const unsigned int hatRollPattern = 0b00000100000000000000001000000000;
+
+void twister(short* buffer) {
+    int DEMO_NUMSAMPLES = f2i(demo_length(TWISTER_SECTION) * SAMPLE_RATE);
+    int s;
     float nextTime = 0;
     int p = 0;
-
-    for (s = 0; s < DEMO_NUMSAMPLESC; s++) {
-        buffer[s] = 0;
-    }
-
-    unsigned char object = 0;
-    int offset = 0;
+    float freq = 110;
+    float nSPC, nSPS;
+    
     int nStrokes = TWISTER_SEGMENTS * 3;
-    float freq = mn2f(notes[0]);
-    float nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
-    float nSPS = nSPC / nStrokes;
-    nextTime += SAMPLE_RATE * pitchChangeTimes[p];
+    freq = mn2f(twisterNotes[0]);
+    nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
+    nSPS = nSPC / nStrokes;
+    nextTime += SAMPLE_RATE * twisterNoteTimes[p];
 
     float* twister = new float[3 * TWISTER_SEGMENTS * 4];
     float* line = new float[6];
@@ -381,17 +434,7 @@ void demo_do(long itime, short* buffer)
         twister[3 * (TWISTER_SEGMENTS * 3 + i) + 2] = -TWISTER_WIDTH;
     }
 
-    float border[] = {
-        -1.f,  1.f, 0.f,
-        -1.f, -1.f, 0.f,
-         1.f, -1.f, 0.f,
-         1.f,  1.f, 0.f,
-        -1.f,  1.f, 0.f,
-        -1.f, -1.f, 0.f,
-    };
-
     int counter = 0;
-    int counter2 = 0;
     float prog = 0;
     float targetProg = 0;
     int samples;
@@ -402,29 +445,43 @@ void demo_do(long itime, short* buffer)
 
     s = 0;
 
-    for (; s + nSPC + BORDER_SAMPLES < DEMO_NUMSAMPLES;) {
+    for (; s + nSPC + BORDER_SAMPLES < 64.5 * SAMPLE_RATE;) {
         targetProg += nSPS;
         samples = f2i(targetProg - prog);
         prog += samples;
 
         yPos = twister[counter * 3 + 1];
-        theta = max(timer - 8.f, 0.f)
-            + (timer / 16.f) * (cosf(timer * 1.5f * M_PI) + 0.5f) * powf(M_E, -0.5 * powf(fmodf(timer, 8.f) - 4.f, 2.0f)) * powf(M_E, -4 * yPos * yPos)
-            + -2 * sinf(M_PI * max(timer - 8.f, 0.f) / 4.f) * (float(counter % TWISTER_SEGMENTS) / TWISTER_SEGMENTS) * (timer > 16 ? 2 : 1);
 
-        deflection = sinf(max(timer - 32.f, 0.f) * M_PI * yPos);
+#ifdef SPIRAL
+        theta = max(timer - 8.f, 0.f)
+            + (timer / 16.f) * (cosf(timer * 1.5f * M_PI) + 0.5f) * powf(M_E, -0.5 * powf(fmodf(timer, 8.f) - 4.f, 2.0f)) * powf(M_E, -6 * yPos * yPos)
+            + yPos * M_PI * 3 / 4;
+#else
+        theta = max(timer - 8.f, 0.f)
+            + (timer / 16.f) * (cosf(timer * 2.0f * M_PI) + 0.5f) * powf(M_E, -0.5 * powf(fmodf(timer, 8.f) - 4.f, 2.0f)) * powf(M_E, -4 * yPos * yPos)
+            + -2 * sinf(M_PI * max(timer - 8.f, 0.f) * 0.125f) * (float(counter % TWISTER_SEGMENTS) / TWISTER_SEGMENTS) * (max(0.f, min((timer - 16) / 8, 2.f)) + 1);
+#endif
 
         rotY(twister + counter * 3, line, theta);
         rotY(twister + counter * 3, line + 3, theta);
+#ifndef SPIRAL
         line[4] += twisterHeight;
+#endif
 
         if (line[2] > -TWISTER_WIDTH || (line[2] == -TWISTER_WIDTH && line[0] > 0)) { // line is visible
+#ifdef SPIRAL
+            line[0] = line[0] / 3.f - 0.5f;
+            line[1] = 0;
+            line[3] = line[3] / 3.f - 0.5f;
+            line[4] = 0;
+            rotZ(line, line, (yPos * M_PI));
+            rotZ(line + 3, line + 3, ((yPos + twisterHeight) * M_PI));
+#endif
             lineToSamples(line, line + 3, buffer + 2 * s, samples);
             s += samples;
         }
 
         counter = (counter + 1) % (TWISTER_SEGMENTS * 4);
-        counter2++;
         if (counter == 0) {
             timer += 1.f / freq;
             prog -= nSPC;
@@ -435,26 +492,39 @@ void demo_do(long itime, short* buffer)
 
         while (s > nextTime) {
             p++;
-            nextTime += SAMPLE_RATE * pitchChangeTimes[p % N_PITCHES];
-            // check pitch and shit
-            freq = mn2f(notes[p % N_PITCHES]); // TODO
+            nextTime += SAMPLE_RATE * twisterNoteTimes[p % TWISTER_N_PITCHES];
+            freq = mn2f(twisterNotes[p % TWISTER_N_PITCHES]);
             nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
             nSPS = nSPC / nStrokes;
         }
     }
-    wobbleBufferEnv(buffer + 16 * 2 * SAMPLE_RATE, SAMPLE_RATE * 32, SAMPLE_RATE * 1.5, 0, 0.f, 0.f, 0.4f, 0.0f, 1.f);
-    wobbleBufferEnv(buffer + 32 * 2 * SAMPLE_RATE, SAMPLE_RATE * 32, SAMPLE_RATE, 0, 0.f, 0.f, 0.0f, 0.6f, 1.f);
+#ifndef SPIRAL
+    wobbleBufferEnv(buffer + 16 * 2 * SAMPLE_RATE, SAMPLE_RATE * 32,   SAMPLE_RATE * 1.5, 0, 0.f,     0.f, 0.4f, 0.0f, 1.f );
+    wobbleBufferEnv(buffer + 50 * 2 * SAMPLE_RATE, SAMPLE_RATE * 14.5, SAMPLE_RATE * 1.5, 0, 2.f / 3, 0.f, 0.4f, 0.0f, 0.5f);
+    wobbleBufferEnv(buffer + 32 * 2 * SAMPLE_RATE, SAMPLE_RATE * 16,   SAMPLE_RATE,       0, 0.f,     0.f, 0.0f, 0.6f, 1.f );
+#endif
 
     normalizeBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
     delete[] twister;
     delete[] line;
 
-    drums(buffer);
+    twisterDrums(buffer);
 }
+void twisterDrums(short* buffer) {
+    const unsigned int cutoutPattern = 0b11111111000010101100111111000000;
 
-void drums(short* buffer) {
+    int i;
+    // cutouts
+    for (i = 768; i < 800; i++) {
+        if (!(cutoutPattern & 1 << (31 - (i % 32)))) {
+            for (int j = ((SAMPLE_RATE >> 4) * i); j < ((SAMPLE_RATE >> 4) * (i + 1)); j++) {
+                buffer[j * 2] = 0;
+                buffer[j * 2 + 1] = 0;
+            }
+        }
+    }
     // sidechain
-    for (int i = 0; i <= 512; i++) {
+    for (i = 0; i < 512; i++) {
         if ((i <= 384 || i >= 400) && (kickPattern & 1 << (15 - (i % 16)))) {
             fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 24000, p0d10, p1d00);
         }
@@ -464,19 +534,19 @@ void drums(short* buffer) {
     }
 
     // kick drums
-    for (int i = 0; i <= 512; i++) {
+    for (i = 0; i < 512; i++) {
         if ((i <= 384 || i >= 400) && (kickPattern & 1 << (15 - (i % 16)))) {
             addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
         }
     }
 
     // snare drums
-    for (int i = 132; i < 512; i += 8) {
+    for (i = 132; i < 512; i += 8) {
         addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
     }
 
     // hihats
-    for (int i = 256; i < 512; i++) {
+    for (i = 256; i < 512; i++) {
         if (i < 384 || i >= 400) {
             if (hatRollPattern & (1 << (31 - (i % 32)))) {
                 addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 4), FILE_RATE / HAT_RATE);
@@ -533,12 +603,150 @@ void drums(short* buffer) {
     }/**/
 }
 
-void demo_end() {
-    delete[] kickBuf;
-    delete[] snareBuf;
-    delete[] openHatBuf;
-#ifdef PULSES
-    delete[] pulseBuf;
-    delete[] pulse2Buf;
-#endif
+void cube(short* buffer) {
+    int DEMO_NUMSAMPLES = f2i(demo_length(CUBE_SECTION) * SAMPLE_RATE);
+    int s;
+    float nextTime = 0;
+    int p = 0;
+    int nStrokes;
+    int faces;
+    float freq, nSPC, nSPS;
+
+    nStrokes = 0;
+    while (nStrokes == 0) {
+        faces = demo_rand(&seed) & 0b111111;
+        for (int i = 0; i < 6; i++) {
+            if (faces & (1 << i)) {
+                nStrokes++;
+            }
+        }
+    }
+
+    freq = mn2f(cubeNotes[0]);
+    if (cubeNotes[p % CUBE_N_PITCHES] == NOFF) freq = 110;
+    nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
+    nSPS = nSPC / nStrokes;
+    nextTime += SAMPLE_RATE * cubeNoteTimes[p % CUBE_N_PITCHES];
+
+    int counter = 0;
+    float prog = 0;
+    float targetProg = 0;
+    int samples;
+    float timer = 0;
+    float yPos;
+    float theta;
+    float deflection;
+
+    s = 0;
+
+    float* currentStroke = new float[3 * 5];
+
+    for (; s + nSPC + BORDER_SAMPLES < DEMO_NUMSAMPLES;) {
+        targetProg += nSPS;
+        samples = f2i(targetProg - prog);
+        prog += samples;
+
+        if ((s >= 8 * SAMPLE_RATE || faces & (1 << counter)) && (cubeNotes[p % CUBE_N_PITCHES] != NOFF)) {
+            for (int v = 0; v < 5; v++) {
+                currentStroke[v * 3 + 0] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 0];
+                currentStroke[v * 3 + 1] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 1];
+                currentStroke[v * 3 + 2] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 2];
+                rotZ(currentStroke + v * 3, currentStroke + v * 3, timer * M_PI);
+                rotY(currentStroke + v * 3, currentStroke + v * 3, timer * M_PI);
+            }
+            strokeToCycle3D(currentStroke, 5, buffer + 2 * s, samples, view_matrix);
+            s += samples;
+        }
+
+        counter = (counter + 1) % 6;
+        if (counter == 0) {
+            prog -= nSPC;
+            targetProg -= nSPC;
+            if (cubeNotes[p % CUBE_N_PITCHES] != NOFF) {
+                timer += 1.f / freq;
+                strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES);
+            }
+            s += BORDER_SAMPLES;
+        }
+
+        while (s > nextTime) {
+            p++;
+
+            if (s >= 8 * SAMPLE_RATE) {
+                nStrokes = 6;
+            }
+            else {
+                nStrokes = 0;
+                while (nStrokes == 0) {
+                    faces = demo_rand(&seed) & 0b111111;
+                    for (int i = 0; i < 6; i++) {
+                        if (faces & (1 << i)) {
+                            nStrokes++;
+                        }
+                    }
+                }
+            }
+
+            // check pitch and shit
+            freq = mn2f(cubeNotes[p % CUBE_N_PITCHES]);
+            if (cubeNotes[p % CUBE_N_PITCHES] == NOFF) freq = 110;
+            nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
+            nSPS = nSPC / nStrokes;
+            nextTime += SAMPLE_RATE * cubeNoteTimes[p % CUBE_N_PITCHES];
+        }
+    }
+
+    delete[] currentStroke;
+
+    wobbleBufferEnv(buffer + 4 * SAMPLE_RATE * 2, SAMPLE_RATE * 28, SAMPLE_RATE / 2.0f, 0, 2.f / 3, 0.f, 0.1f, 0.0f, 0.5f);
+    wobbleBufferEnv(buffer + 4 * SAMPLE_RATE * 2, SAMPLE_RATE * 28, SAMPLE_RATE / 3.0f, 0, 0.f, 2.f / 3, 0.0f, 0.1f, 0.5f);
+    normalizeBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
+
+    cubeDrums(buffer);
+
+}
+void cubeDrums(short* buffer) {
+    int i;
+    // sidechain
+    for (i = 128; i < 256; i++) {
+        if (i <= 224 && (i % 4 == 0)) {//(kickPattern & (1 << (15 - (i % 16))))) {
+            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 18000, p0d10, p1d00);
+        }
+        else if ((i + 4) % 8 == 0 && i > 64) {
+            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 18000, p0d50, p1d00);
+        }
+    }
+
+    // kick drums
+    for (i = 128; i <= 224; i++) {
+        if (i % 4 == 0) {//kickPattern & (1 << (15 - (i % 16)))) {
+            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
+        }
+    }
+
+    // snare drums
+    for (i = 132; i < 256; i += 8) {
+        addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
+    }
+
+    // hihats
+    for (i = 64; i < 256; i += 2) {
+        if (i % 32 == 26) addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
+        else addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
+    }
+    /*
+    for (i = 256; i < 512; i++) {
+        if (i < 384 || i >= 400) {
+            if (hatRollPattern & (1 << (31 - (i % 32)))) {
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 4), FILE_RATE / HAT_RATE);
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i + (SAMPLE_RATE >> 4)) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 5), FILE_RATE / HAT_RATE);
+            }
+            else if (hatPattern & (1 << (31 - (i % 32)))) {
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
+            }
+            else {
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
+            }
+        }
+    }*/
 }
