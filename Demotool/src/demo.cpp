@@ -839,7 +839,7 @@ void plasma(short* buffer) {
 
     nStrokes = 1;
 
-    float startFreq = 11;
+    float startFreq = 12;
     float endFreq = 30;
     float dF = (endFreq - startFreq) / demo_length(PLASMA_SECTION);
     freq = mn2f(startFreq);
