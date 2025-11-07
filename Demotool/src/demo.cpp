@@ -839,8 +839,8 @@ void plasma(short* buffer) {
 
     nStrokes = 1;
 
-    float startFreq = 23;
-    float endFreq = 42;
+    float startFreq = 11;
+    float endFreq = 30;
     float dF = (endFreq - startFreq) / demo_length(PLASMA_SECTION);
     freq = mn2f(startFreq);
     nSPC = SAMPLE_RATE / freq;
@@ -851,7 +851,6 @@ void plasma(short* buffer) {
     double targetProg = 0;
     int samples;
     float timer = 0;
-    int stroke = 0;
 
     s = 0;
 
@@ -861,11 +860,18 @@ void plasma(short* buffer) {
         samples = f2i(targetProg - prog);
         prog += samples;
 
-        if (!hilligoss(buffer + 2 * s, samples, demo_rand(&seed), timer, 1.f / SAMPLE_RATE, plasmaFunction, 1)) return;
-        s += samples;
-        strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES);
-        s += BORDER_SAMPLES;
-        stroke++;
+        short* marker = buffer + 2 * s;
+        if (!hilligoss(marker, samples / 2, demo_rand(&seed), timer, 1.f / SAMPLE_RATE, plasmaFunction, 1)) {
+            return;
+        }
+        s += samples / 2;
+        strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES / 2);
+        s += BORDER_SAMPLES / 2;
+
+        memcpy(buffer + 2 * s, marker, (samples / 2 + BORDER_SAMPLES / 2) * 2 * sizeof(short));
+        s += samples / 2;
+        s += BORDER_SAMPLES / 2;
+
         timer += 1.f / freq;
 
         // check pitch and shit
@@ -933,15 +939,21 @@ void finale(short* buffer) {
 
         // render
         if (useHilli) {
-            if (!hilligoss(buffer + 2 * s, samples, demo_rand(&seed), timer, 4.f / SAMPLE_RATE, plasmaFunction, 1)) {
+            short* marker = buffer + 2 * s;
+            if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilligossTimer, 2.f / SAMPLE_RATE, plasmaFunction, 1)) {
                 free(currentStroke);
                 free(line);
                 return;
             }
-            s += samples;
-            strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES);
-            s += BORDER_SAMPLES;
-            hilligossTimer += 4.0 / freq;
+            s += samples / 2;
+            strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES / 2);
+            s += BORDER_SAMPLES / 2;
+
+            memcpy(buffer + 2 * s, marker, (samples / 2 + BORDER_SAMPLES / 2) * 2 * sizeof(short));
+            s += samples / 2;
+            s += BORDER_SAMPLES / 2;
+
+            hilligossTimer += 2.0 / freq;
         }
         else {
             // pitched shit
@@ -1007,7 +1019,7 @@ void finale(short* buffer) {
             }
 
             // check pitch and shit
-            if (finaleNotes[p % FINALE_N_PITCHES] == NOFF) freq = mn2f(30);
+            if (finaleNotes[p % FINALE_N_PITCHES] == NOFF) freq = mn2f(18);
             else freq = mn2f(finaleNotes[p % FINALE_N_PITCHES]);
             nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
             nSPS = nSPC / (useHilli ? 1 : (object ? nStrokesTwister : nStrokesCube));
