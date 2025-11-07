@@ -1,17 +1,13 @@
 //--------------------------------------------------------------------------//
 // iq / rgba  .  tiny codes  .  2008/2021                                   //
 //--------------------------------------------------------------------------//
+#pragma once
 
-#ifndef _INTRO_H_
-#define _INTRO_H_
-
-#ifndef SAVE_FILE
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
-#endif
 #include "config.h"
-#include "system.h"
 #include "tool.h"
+#include "system.h"
 
 #ifdef SAMPLED_SNARE
 #include "snare.h"
@@ -50,5 +46,3 @@ int   demo_init( int itime );
 float demo_length( int section );
 void  demo_do( long time, short * buffer, int section );
 void  demo_end( void );
-
-#endif

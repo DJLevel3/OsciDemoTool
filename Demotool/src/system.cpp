@@ -12,6 +12,7 @@ void mvp43(float* matrix, float* src, float* dest)
     dest[2] = result[2] / result[3];
 }
 
+/*
 void eulerMat(float* matrix, float x, float y, float z) {
     float cX = cosf(x);
     float sX = sinf(x);
@@ -35,4 +36,24 @@ void eulerMat(float* matrix, float x, float y, float z) {
     matrix[13] = 0;
     matrix[14] = 0;
     matrix[15] = 1;
+}*/
+
+extern "C"
+{
+void* memset(void* dst, int val, size_t size)
+{
+    char* realdst = (char*)dst;
+    for (size_t i = 0; i < size; i++)
+        realdst[i] = (char)val;
+    return dst;
+}
+
+void* memcpy(void* dst, const void* src, size_t size)
+{
+    char* _dst = (char*)dst;
+    const char* _src = (char*)src;
+    for (size_t i = 0; i < size; i++)
+        _dst[i] = _src[i];
+    return dst;
+}
 }

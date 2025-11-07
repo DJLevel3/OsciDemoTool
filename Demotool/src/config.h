@@ -1,34 +1,42 @@
 #pragma once
 
-#define FILE_RATE 96000
-#define BPM 128.f
-#define SAMPLE_RATE (int(120.f / BPM * FILE_RATE)) // Sample rate to use
+/****************************************
+* Here you can find configuration for   *
+* various aspects of the demo. Options  *
+* called SECONDS are actually measured  *
+* in seconds at 120 BPM (AKA half notes)*
+* so it'll be shorter at higher BPMs.   *
+*****************************************/
 
-#define PRECALC_SECTION  0
-#define PRECALC_DURATION 2
+#define FILE_RATE 192000 // Actual sample rate. Changing this changes stuff a lot, including how the drums sound
+#define BPM 128.f // BPM. I think you should understand this
+
+// Don't touch these, they adjust the pitches and sample rates to match the BPM
+#define SPEED_FACTOR (120.f / BPM)
+#define SAMPLE_RATE (int(SPEED_FACTOR * FILE_RATE))
+
+#define DEMO_SECTIONS 6 // How many sections to put in the demo
+
+#define INTRO_SECTION  0
+#define INTRO_SECONDS 8
 
 #define CUBE_SECTION  1
-#define CUBE_DURATION 32
+#define CUBE_SECONDS 64
 
-#define TWISTER_SECTION  2
-#define TWISTER_DURATION 66 // Duration in seconds
+#define PLASMA_SECTION  2
+#define PLASMA_SECONDS 12
 
-#define PLASMA_SECTION  3
-#define PLASMA_DURATION 32
+#define TWISTER_SECTION  3
+#define TWISTER_SECONDS 64 // Duration in seconds
 
-#define AUDIO_SECONDS (PRECALC_DURATION + TWISTER_DURATION + CUBE_DURATION)
-#define DEMO_SECTIONS 3
+#define FINALE_SECTION 4
+#define FINALE_SECONDS 32 
 
-//#define LISSAJOUS_INTRO // Use a lissajous pattern while the demo calculates (roughly 100-150 bytes)
+#define OUTRO_SECTION 5
+#define OUTRO_SECONDS 32
 
-//#define ROTATION_SMOOTH // Rotate at constant rate instead of frequency dependent (roughly 100 bytes)
+#define AUDIO_SECONDS (INTRO_SECONDS + TWISTER_SECONDS + CUBE_SECONDS + PLASMA_SECONDS + FINALE_SECONDS + OUTRO_SECONDS)
+
+#define BORDER_SAMPLES 800
  
-#ifdef ROTATION_SMOOTH
-#define ROTATION_SAMPLES 1200 // Samples per rotation increment
-#endif
-
-//#define SAMPLED_KICK // Use a sampled kick drum (roughly 1000 bytes)
-//#define SAMPLED_SNARE // Use a sampled snare drum (roughly 1000 bytes)
 //#define NOISE_HIHAT // Use noise for the hihat instead of square waves
-
-//#define SPIRAL // make the column a spiral
