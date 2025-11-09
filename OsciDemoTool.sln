@@ -9,11 +9,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wav2h", "wav2h\wav2h.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gpla2h", "gpla2h\gpla2h.vcxproj", "{678AECD3-8016-4768-96E9-E999D511763B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Demotool64", "Demotool64\Demotool64.vcxproj", "{23B58183-D95A-4A22-8E24-06697C069C4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		FileLite|Win32 = FileLite|Win32
 		FileRel|Win32 = FileRel|Win32
+		MaxFileRel|Win32 = MaxFileRel|Win32
 		MaxRel|Win32 = MaxRel|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
@@ -24,6 +27,8 @@ Global
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.FileLite|Win32.Build.0 = FileLite|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.FileRel|Win32.ActiveCfg = FileRel|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.FileRel|Win32.Build.0 = FileRel|Win32
+		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.MaxFileRel|Win32.ActiveCfg = MaxFileRel|Win32
+		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.MaxFileRel|Win32.Build.0 = MaxFileRel|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.MaxRel|Win32.ActiveCfg = MaxRel|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.MaxRel|Win32.Build.0 = MaxRel|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.Release|Win32.ActiveCfg = Release|Win32
@@ -34,6 +39,8 @@ Global
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.FileLite|Win32.Build.0 = FileLite|x64
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.FileRel|Win32.ActiveCfg = FileRel|x64
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.FileRel|Win32.Build.0 = FileRel|x64
+		{3978077D-BF45-4F81-8A08-CD785AD126E9}.MaxFileRel|Win32.ActiveCfg = MaxFileRel|x64
+		{3978077D-BF45-4F81-8A08-CD785AD126E9}.MaxFileRel|Win32.Build.0 = MaxFileRel|x64
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.MaxRel|Win32.ActiveCfg = MaxRel|x64
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.MaxRel|Win32.Build.0 = MaxRel|x64
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.Release|Win32.ActiveCfg = Release|Win32
@@ -44,10 +51,24 @@ Global
 		{678AECD3-8016-4768-96E9-E999D511763B}.FileLite|Win32.Build.0 = FileLite|x64
 		{678AECD3-8016-4768-96E9-E999D511763B}.FileRel|Win32.ActiveCfg = FileRel|x64
 		{678AECD3-8016-4768-96E9-E999D511763B}.FileRel|Win32.Build.0 = FileRel|x64
+		{678AECD3-8016-4768-96E9-E999D511763B}.MaxFileRel|Win32.ActiveCfg = MaxFileRel|x64
+		{678AECD3-8016-4768-96E9-E999D511763B}.MaxFileRel|Win32.Build.0 = MaxFileRel|x64
 		{678AECD3-8016-4768-96E9-E999D511763B}.MaxRel|Win32.ActiveCfg = MaxRel|x64
 		{678AECD3-8016-4768-96E9-E999D511763B}.MaxRel|Win32.Build.0 = MaxRel|x64
 		{678AECD3-8016-4768-96E9-E999D511763B}.Release|Win32.ActiveCfg = Release|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.Release|Win32.Build.0 = Release|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.Debug|Win32.Build.0 = Debug|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.FileLite|Win32.ActiveCfg = FileLite|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.FileLite|Win32.Build.0 = FileLite|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.FileRel|Win32.ActiveCfg = FileRel|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.FileRel|Win32.Build.0 = FileRel|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.MaxFileRel|Win32.ActiveCfg = MaxFileRel|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.MaxFileRel|Win32.Build.0 = MaxFileRel|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.MaxRel|Win32.ActiveCfg = MaxRel|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.MaxRel|Win32.Build.0 = MaxRel|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.Release|Win32.ActiveCfg = Release|Win32
+		{23B58183-D95A-4A22-8E24-06697C069C4E}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
