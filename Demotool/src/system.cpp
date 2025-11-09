@@ -1,7 +1,6 @@
 
 #include "system.h"
 
-/*
 void mvp43(float* matrix, float* src, float* dest)
 {
     float result[4] = { 0, 0, 0, 0 };
@@ -13,6 +12,7 @@ void mvp43(float* matrix, float* src, float* dest)
     dest[2] = result[2] / result[3];
 }
 
+/*
 void eulerMat(float* matrix, float x, float y, float z) {
     float cX = cosf(x);
     float sX = sinf(x);

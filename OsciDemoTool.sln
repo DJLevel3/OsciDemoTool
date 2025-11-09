@@ -9,8 +9,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wav2h", "wav2h\wav2h.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gpla2h", "gpla2h\gpla2h.vcxproj", "{678AECD3-8016-4768-96E9-E999D511763B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Demotool64", "Demotool64\Demotool64.vcxproj", "{2632A27F-0897-40F9-BC8B-6E2FB39B6939}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -57,18 +55,6 @@ Global
 		{678AECD3-8016-4768-96E9-E999D511763B}.MaxRel|Win32.Build.0 = MaxRel|x64
 		{678AECD3-8016-4768-96E9-E999D511763B}.Release|Win32.ActiveCfg = Release|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.Release|Win32.Build.0 = Release|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.Debug|Win32.ActiveCfg = Debug|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.Debug|Win32.Build.0 = Debug|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.FileLite|Win32.ActiveCfg = FileLite|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.FileLite|Win32.Build.0 = FileLite|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.FileRel|Win32.ActiveCfg = FileRel|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.FileRel|Win32.Build.0 = FileRel|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.MaxFileRel|Win32.ActiveCfg = MaxFileRel|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.MaxFileRel|Win32.Build.0 = MaxFileRel|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.MaxRel|Win32.ActiveCfg = MaxRel|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.MaxRel|Win32.Build.0 = MaxRel|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.Release|Win32.ActiveCfg = Release|Win32
-		{2632A27F-0897-40F9-BC8B-6E2FB39B6939}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
