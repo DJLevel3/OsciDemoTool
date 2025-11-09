@@ -2,6 +2,9 @@
 Demotool/bin
 Demotool/exe
 Demotool/kkrunchy.exe
+Demotool64/bin
+Demotool64/exe
+Demotool64/kkrunchy.exe
 wav2h/Debug
 wav2h/Release
 wav2h/x64
