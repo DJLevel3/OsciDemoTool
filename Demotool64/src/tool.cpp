@@ -63,7 +63,6 @@ void lineToSamples(float* vec3Start, float* vec3End, short* buffer, int samples)
     }
 }
 
-/*
 bool strokeToCycle3D(float* points, int nPoints, short* buffer, int samples, float* viewMatrix)
 {
     if (nPoints < 2) return false;
@@ -105,7 +104,7 @@ bool strokeToCycle3D(float* points, int nPoints, short* buffer, int samples, flo
     free(lengths);
 
     return true;
-}*/
+}
 
 bool strokeToCycle2D(float* points, int nPoints, short* buffer, int samples)
 {
@@ -164,12 +163,23 @@ void addSamples(short* buffer, short* toAdd, int samples, float stretch)
 
 float normalizeBuffer(short* buffer, int samples, float volume)
 {
+    float maxValue = 0;
+    float value1 = 0;
+    float value2 = 0;
     for (int i = 0; i < samples; i++) {
-        buffer[i * 2] = f2i(buffer[i * 2] * volume);
-        buffer[i * 2 + 1] = f2i(buffer[i * 2 + 1] * volume);
+        value1 = fabsf(buffer[i * 2]);
+        value2 = fabsf(buffer[i * 2 + 1]);
+        value1 = max(value1, value2);
+        maxValue = max(value1, maxValue);
     }
 
-    return 1;
+    maxValue /= 32767.f;
+    for (int i = 0; i < samples; i++) {
+        buffer[i * 2] = f2i(buffer[i * 2] * volume / maxValue);
+        buffer[i * 2 + 1] = f2i(buffer[i * 2 + 1] * volume / maxValue);
+    }
+
+    return maxValue;
 }
 
 void fadeBuffer(short* buffer, int samples, float start, float end)
@@ -191,8 +201,8 @@ void wobbleBufferEnv(short* buffer, int samples, float periodT, int phase, float
         wx = sinf(((i + phase) / periodT + scaleX * y) * 2.f * M_PI);
         wy = sinf(((i + phase) / periodT + scaleY * x) * 2.f * M_PI);
 
-        ex = (powf((float(M_E)), -curve * x * x)- powf((float(M_E)), -curve)) / (1 - powf((float(M_E)), -curve));
-        ey = (powf((float(M_E)), -curve * y * y)- powf((float(M_E)), -curve)) / (1 - powf((float(M_E)), -curve));
+        ex = (powf(M_E, -curve * x * x)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));
+        ey = (powf(M_E, -curve * y * y)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));
 
         buffer[i * 2] = min(SHRT_MAX, max(SHRT_MIN, buffer[i * 2] + f2i(ex * wx * intensityX * SHRT_MAX)));
         buffer[i * 2 + 1] = min(SHRT_MAX, max(SHRT_MIN, buffer[i * 2 + 1] + f2i(ey * wy * intensityY * SHRT_MAX)));
@@ -223,19 +233,17 @@ void circleFill(short* buffer, int samples, int period, float level)
 }*/
 float squareWaveNoDC(int t, int period, float pulseWidth) {
     return ((t % period) <= pulseWidth * period) ? (pulseWidth - 1) : (pulseWidth);
-}/*
+}
 float squareWaveCentered(int t, int period, float pulseWidth) {
     return ((t % period) <= pulseWidth * period) ? -0.5 : 0.5;
 }
-float squareWaveZeroed(int t, int period, float pulseWidth) {
+/*float squareWaveZeroed(int t, int period, float pulseWidth) {
     return ((t % period) <= pulseWidth * period) ? 0 : 1;
 }*/
 
 float mn2f(float n) {
     return SPEED_FACTOR * 261.63f * powf(2.0f, (n - 60) / 12.f);
 }
-
-/*
 void filterBuffer(short* buffer, int samples, float resonance, float start, float end)
 {
     float state0_L = 0;
@@ -264,7 +272,20 @@ void filterBuffer(short* buffer, int samples, float resonance, float start, floa
         buffer[2 * i + 1] = f2i(state2_R);
         t += dt;
     }
-}*/
+}
+
+void rotX(float* src, float* dest, float theta) {
+    float sT = sinf(theta);
+    float cT = cosf(theta);
+
+    float x, y;
+    x = cT * src[1] - sT * src[2];
+    y = sT * src[1] + cT * src[2];
+
+    dest[0] = src[0];
+    dest[1] = x;
+    dest[2] = y;
+}
 
 void rotY(float* src, float* dest, float theta) {
     float sT = sinf(theta);
@@ -276,20 +297,6 @@ void rotY(float* src, float* dest, float theta) {
 
     dest[0] = x;
     dest[1] = src[1];
-    dest[2] = y;
-}
-
-/*
-void rotX(float* src, float* dest, float theta) {
-    float sT = sinf(theta);
-    float cT = cosf(theta);
-
-    float x, y;
-    x = cT * src[1] - sT * src[2];
-    y = sT * src[1] + cT * src[2];
-
-    dest[0] = src[0];
-    dest[1] = x;
     dest[2] = y;
 }
 
@@ -467,4 +474,3 @@ bool determinePath(short* pixelsOriginal, int targetCount)
     free(path);
     return 1;
 }
-*/

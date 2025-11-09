@@ -10,8 +10,6 @@
 #include "config.h"
 #include "demo.h"
 
-//#define LOW_RATE
-
 #ifdef SAVE_FILE
 #include <cstdio>
 #include <cstdlib>
@@ -35,9 +33,9 @@ short chunks[2][CHUNK_SIZE * 2];
 bool chunk_swap = false;
 long fileCounter;
 
-#ifndef SAVE_FILE
 void CALLBACK WaveOutProc(HWAVEOUT, UINT, DWORD_PTR, DWORD_PTR, DWORD_PTR);
-#else
+
+#ifdef SAVE_FILE
 static const unsigned int dotWavHeader[11] = {
     0x46464952,
     SAMPLE_RATE * AUDIO_SECONDS * 2 * 2 + 36,
@@ -60,18 +58,14 @@ void entrypoint(void)
 {
     demoAudioA = (short*)malloc((SAMPLE_RATE * 2 * AUDIO_SECONDS + 22) * sizeof(short));
     if (demoAudioA == 0) return;
+    memset(demoAudioA, 0, SAMPLE_RATE * AUDIO_SECONDS * 2 + 44);
 
     fileCounter = 22;
 
-#ifndef SAVE_FILE
     WAVEFORMATEX format{};
     format.wFormatTag = WAVE_FORMAT_PCM,
     format.nChannels = 2;
-#ifdef LOW_RATE
-    format.nSamplesPerSec = 48000;
-#else
     format.nSamplesPerSec = FILE_RATE;
-#endif
     format.wBitsPerSample = 16;
     format.cbSize = 0;
     format.nBlockAlign = format.nChannels * format.wBitsPerSample / 8;
@@ -91,47 +85,54 @@ void entrypoint(void)
     if (waveOutOpen(&wave_out, -1, &format, (DWORD_PTR)WaveOutProc, (DWORD_PTR)NULL, CALLBACK_FUNCTION) != MMSYSERR_NOERROR) {
         ExitProcess(-1);
     }
-#endif
 
     float DEMO_DURATION;
     int DEMO_NUMSAMPLESC;
 
-    long st = timeGetTime();
+    bool done = 0;
+    long t = timeGetTime();
+    long st = 0;
     // init and build the demo
-    if (!demo_init(st)) return;
+    if (!demo_init(t)) return;
     int section = 0;
 
     short* demoBuffer;
 
+    done = GetAsyncKeyState(VK_ESCAPE);
 #ifdef SAVE_FILE
     memcpy(demoAudioA, dotWavHeader, 44);
 #endif
     writePointer = 22;
 
     st = timeGetTime();
-    DEMO_NUMSAMPLESC = TWISTER_SECONDS * SAMPLE_RATE * 2;
+    while (section < DEMO_SECTIONS && !done) {
+        DEMO_NUMSAMPLESC = f2i(demo_length(section) * SAMPLE_RATE * 2);
 
-    demoBuffer = (short*)malloc(DEMO_NUMSAMPLESC * sizeof(short));
-    if (demoBuffer != 0) {
-        intro(demoBuffer);
-        memcpy(demoAudioA + writePointer, demoBuffer, INTRO_SECONDS * SAMPLE_RATE * 2 * sizeof(short));
-        writePointer += INTRO_SECONDS * SAMPLE_RATE * 2;
-#ifndef SAVE_FILE
-        for (int i = 0; i < 2; ++i) {
-            header[i].lpData = (CHAR*)chunks[i];
-            header[i].dwBufferLength = CHUNK_SIZE * 2 * 2;
-            if (waveOutPrepareHeader(wave_out, &header[i], sizeof(header[i])) != MMSYSERR_NOERROR) {
-                goto DONE;
-            }
-            if (waveOutWrite(wave_out, &header[i], sizeof(header[i])) != MMSYSERR_NOERROR) {
-                goto DONE;
+        demoBuffer = (short*)malloc(DEMO_NUMSAMPLESC * sizeof(short));
+        if (demoBuffer != 0) {
+            t = timeGetTime();
+            demo_do(t, demoBuffer, section);
+            memcpy(demoAudioA + writePointer, demoBuffer, DEMO_NUMSAMPLESC * sizeof(short));
+            writePointer += DEMO_NUMSAMPLESC;
+            free(demoBuffer);
+        }
+        if (section == 0) {
+            for (int i = 0; i < 2; ++i) {
+                memset(chunks[chunk_swap], 0, 2 * CHUNK_SIZE * sizeof(short));
+                header[i].lpData = (CHAR*)chunks[i];
+                header[i].dwBufferLength = CHUNK_SIZE * 2 * 2;
+                if (waveOutPrepareHeader(wave_out, &header[i], sizeof(header[i])) != MMSYSERR_NOERROR) {
+                    free(demoAudioA);
+                    ExitProcess(-2);
+                }
+                if (waveOutWrite(wave_out, &header[i], sizeof(header[i])) != MMSYSERR_NOERROR) {
+                    free(demoAudioA);
+                    ExitProcess(-3);
+                }
             }
         }
-#endif
-        twister(demoBuffer);
-        memcpy(demoAudioA + writePointer, demoBuffer, DEMO_NUMSAMPLESC * sizeof(short));
-        writePointer += DEMO_NUMSAMPLESC;
-        free(demoBuffer);
+        section++;
+        done = GetAsyncKeyState(VK_ESCAPE);
     }
 
     demo_end();
@@ -140,42 +141,38 @@ void entrypoint(void)
     FILE* oFile = fopen("demo.wav", "wb");
     fwrite(demoAudioA, sizeof(short), SAMPLE_RATE * 2 * AUDIO_SECONDS + 22, oFile);
     fclose(oFile);
-#else
-    while (!GetAsyncKeyState(VK_ESCAPE) && timeGetTime() < st + 1000 * AUDIO_SECONDS + 500) {
+#endif
+
+    while (!GetAsyncKeyState(VK_ESCAPE) && timeGetTime() < st + 1000 * AUDIO_SECONDS * SPEED_FACTOR + 500) {
         Sleep(10);
     }
 
     waveOutUnprepareHeader(wave_out, &header[0], sizeof(header[0]));
     waveOutUnprepareHeader(wave_out, &header[0], sizeof(header[1]));
 
-    Sleep(500);
-#endif
+    Sleep(100);
 
-DONE:
     free(demoAudioA);
+
     ExitProcess(0);
 }
 
-#ifndef SAVE_FILE
 void CALLBACK WaveOutProc(HWAVEOUT wave_out_handle, UINT message, DWORD_PTR instance, DWORD_PTR param1, DWORD_PTR param2) {
     switch (message) {
     case WOM_DONE: {
-#ifdef LOW_RATE
-        for (int i = 0; i < CHUNK_SIZE; i++) {
-            chunks[chunk_swap][i * 2] = demoAudioA[fileCounter * 2];
-            chunks[chunk_swap][i * 2 + 1] = demoAudioA[fileCounter * 2 + 1];
-            if (fileCounter + 4 < SAMPLE_RATE * AUDIO_SECONDS) fileCounter += 4;
-        }
-#else
-        for (int i = 0; i < CHUNK_SIZE; i++) {
+        for (int i = 0; i < CHUNK_SIZE; ++i) {
             chunks[chunk_swap][i * 2] = demoAudioA[fileCounter * 2];
             chunks[chunk_swap][i * 2 + 1] = demoAudioA[fileCounter * 2 + 1];
             if (fileCounter < SAMPLE_RATE * AUDIO_SECONDS - 1) fileCounter++;
         }
+        if (waveOutWrite(wave_out, &header[chunk_swap], sizeof(header[chunk_swap])) != MMSYSERR_NOERROR) {
+#ifdef _DEBUG
+#ifdef SAVE_FILE
+            printf("Wave Out Write Failed - Something's Fucked :3\n");
 #endif
-        waveOutWrite(wave_out, &header[chunk_swap], sizeof(header[chunk_swap]));
+#endif
+        }
         chunk_swap = !chunk_swap;
     } break;
     }
 }
-#endif

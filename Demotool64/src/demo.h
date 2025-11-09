@@ -28,18 +28,21 @@
 #else
 #define KICK_RATE 96000
 #define KICK_SAMPLES 12000
-#define KICK_FMAX 330
+#define KICK_FMAX 165
 #define KICK_FBASE 55
-#define KICK_FSTEP 24
+#define KICK_FSTEP 20
 
-#define KICK_START_V p0d60
-#define KICK_FADE_START 2000
+#define KICK_START_V p0d50
+#define KICK_FADE_START 1000
+
+#define KICK_MID_V p0d40
+#define KICK_FADE_MID 3000
 
 #define KICK_END_V p0d10
+#define KICK_FADE_END KICK_SAMPLES
 #endif
 
 int   demo_init( int itime );
+float demo_length( int section );
+void  demo_do( long time, short * buffer, int section );
 void  demo_end( void );
-void intro(short* buffer);
-
-void twister(short* buffer);
