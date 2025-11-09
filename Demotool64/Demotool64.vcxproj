@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>Demotool</ProjectName>
+    <ProjectName>Demotool64</ProjectName>
     <ProjectGuid>{FC88ED06-6F8D-4ACD-BE21-D88794209911}</ProjectGuid>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>

@@ -36,3 +36,5 @@ bool hilligoss(short* buffer, int samples, int randomSeed, float tInitial, float
 bool determinePath(short* pixelsOriginal, int targetCount);
 
 #define MAX_HILLIGOSS_ITERATIONS (1000 * 1000 * 10)
+
+
