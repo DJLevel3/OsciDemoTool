@@ -2,9 +2,8 @@
 Demotool/bin
 Demotool/exe
 Demotool/kkrunchy.exe
-Demotool64/bin
-Demotool64/exe
-Demotool64/kkrunchy.exe
+Tool-64K/bin
+Tool-64K/exe
 wav2h/Debug
 wav2h/Release
 wav2h/x64
@@ -28,3 +27,4 @@ archive.zip
 /tlibc
 /UpgradeLog.htm
 /UpgradeLog2.htm
+demo.wav

@@ -39,8 +39,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectName>Demotool</ProjectName>
-    <ProjectGuid>{FC88ED06-6F8D-4ACD-BE21-D88794209911}</ProjectGuid>
+    <ProjectName>Tool-64K</ProjectName>
+    <ProjectGuid>{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}</ProjectGuid>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -254,8 +254,17 @@
       <EntryPointSymbol>entrypoint</EntryPointSymbol>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions />
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
@@ -304,10 +313,19 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHTRIES:300 /COMPMODE:SLOW /ORDERTRIES:4000  /UNALIGNCODE /REPORT:.\exe\out.html %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(OutDir)$(TargetName).map</MapFileName>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='FileRelease|Win32'">
     <Midl>
@@ -324,7 +342,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SAVE_FILE;WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -359,10 +377,19 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHTRIES:300 /COMPMODE:SLOW /ORDERTRIES:4000  /UNALIGNCODE /REPORT:.\exe\out.html %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>$(OutDir)$(TargetName).map</MapFileName>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='FileRel|Win32'">
     <Midl>
@@ -414,10 +441,17 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHTRIES:300 /COMPMODE:SLOW /ORDERTRIES:4000  /UNALIGNCODE /REPORT:.\exe\out.html %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='FileLite|Win32'">
     <Midl>
@@ -469,10 +503,17 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /COMPMODE:INSTANT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MaxRel|Win32'">
     <Midl>
@@ -524,10 +565,17 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHTRIES:300 /COMPMODE:VERYSLOW /ORDERTRIES:20000  /UNALIGNCODE /REPORT:.\exe\out.html /UNSAFEIMPORT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MaxFileRel|Win32'">
     <Midl>
@@ -579,10 +627,17 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHTRIES:300 /COMPMODE:VERYSLOW /ORDERTRIES:20000  /UNALIGNCODE /REPORT:.\exe\out.html /UNSAFEIMPORT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseX|Win32'">
     <Midl>
@@ -634,10 +689,17 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHTRIES:100 /HASHSIZE:200 /COMPMODE:VERYSLOW /ORDERTRIES:10000  /UNALIGNCODE /REPORT:.\exe\out.html /UNSAFEIMPORT %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_AudioSave|Win32'">
     <Midl>
@@ -688,10 +750,17 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/CRINKLER /HASHTRIES:300 /COMPMODE:SLOW /ORDERTRIES:4000  /UNALIGNCODE %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <Bscmake />
+    <PostBuildEvent>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Run kkrunchy</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\characters.h" />
