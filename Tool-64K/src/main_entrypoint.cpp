@@ -54,6 +54,7 @@ static const unsigned int dotWavHeader[11] = {
 short* demoAudioA;
 long writePointer;
 
+bool safe = true;
 void entrypoint(void)
 {
     demoAudioA = (short*)malloc((SAMPLE_RATE * 2 * AUDIO_SECONDS + 22) * sizeof(short));
@@ -111,7 +112,7 @@ void entrypoint(void)
         demoBuffer = (short*)malloc(DEMO_NUMSAMPLESC * sizeof(short));
         if (demoBuffer != 0) {
             t = timeGetTime();
-            demo_do(t, demoBuffer, section);
+            done = !demo_do(t, demoBuffer, section);
             memcpy(demoAudioA + writePointer, demoBuffer, DEMO_NUMSAMPLESC * sizeof(short));
             writePointer += DEMO_NUMSAMPLESC;
             free(demoBuffer);
@@ -132,7 +133,7 @@ void entrypoint(void)
             }
         }
         section++;
-        done = GetAsyncKeyState(VK_ESCAPE);
+        done = done || GetAsyncKeyState(VK_ESCAPE);
     }
 
     demo_end();
@@ -150,8 +151,7 @@ void entrypoint(void)
     waveOutUnprepareHeader(wave_out, &header[0], sizeof(header[0]));
     waveOutUnprepareHeader(wave_out, &header[0], sizeof(header[1]));
 
-    Sleep(100);
-
+    safe = false;
     free(demoAudioA);
 
     ExitProcess(0);
@@ -161,9 +161,11 @@ void CALLBACK WaveOutProc(HWAVEOUT wave_out_handle, UINT message, DWORD_PTR inst
     switch (message) {
     case WOM_DONE: {
         for (int i = 0; i < CHUNK_SIZE; ++i) {
-            chunks[chunk_swap][i * 2] = demoAudioA[fileCounter * 2];
-            chunks[chunk_swap][i * 2 + 1] = demoAudioA[fileCounter * 2 + 1];
-            if (fileCounter < SAMPLE_RATE * AUDIO_SECONDS - 1) fileCounter++;
+            if (safe) {
+                chunks[chunk_swap][i * 2] = demoAudioA[fileCounter * 2];
+                chunks[chunk_swap][i * 2 + 1] = demoAudioA[fileCounter * 2 + 1];
+                if (fileCounter < SAMPLE_RATE * AUDIO_SECONDS - 1) fileCounter++;
+            }
         }
         if (waveOutWrite(wave_out, &header[chunk_swap], sizeof(header[chunk_swap])) != MMSYSERR_NOERROR) {
 #ifdef _DEBUG

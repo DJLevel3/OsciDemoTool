@@ -13,35 +13,44 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tool-64K", "Tool-64K\Tool-6
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		CrinklerRelease|Win32 = CrinklerRelease|Win32
 		Debug|Win32 = Debug|Win32
 		FileRelease|Win32 = FileRelease|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.CrinklerRelease|Win32.ActiveCfg = CrinklerRelease|Win32
+		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.CrinklerRelease|Win32.Build.0 = CrinklerRelease|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.Debug|Win32.ActiveCfg = Debug|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.Debug|Win32.Build.0 = Debug|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.FileRelease|Win32.ActiveCfg = FileRelease|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.FileRelease|Win32.Build.0 = FileRelease|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.Release|Win32.ActiveCfg = Release|Win32
 		{FC88ED06-6F8D-4ACD-BE21-D88794209911}.Release|Win32.Build.0 = Release|Win32
+		{3978077D-BF45-4F81-8A08-CD785AD126E9}.CrinklerRelease|Win32.ActiveCfg = CrinklerRelease|Win32
+		{3978077D-BF45-4F81-8A08-CD785AD126E9}.CrinklerRelease|Win32.Build.0 = CrinklerRelease|Win32
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.Debug|Win32.ActiveCfg = Debug|Win32
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.Debug|Win32.Build.0 = Debug|Win32
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.FileRelease|Win32.ActiveCfg = FileRelease|Win32
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.FileRelease|Win32.Build.0 = FileRelease|Win32
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.Release|Win32.ActiveCfg = Release|Win32
 		{3978077D-BF45-4F81-8A08-CD785AD126E9}.Release|Win32.Build.0 = Release|Win32
+		{678AECD3-8016-4768-96E9-E999D511763B}.CrinklerRelease|Win32.ActiveCfg = CrinklerRelease|Win32
+		{678AECD3-8016-4768-96E9-E999D511763B}.CrinklerRelease|Win32.Build.0 = CrinklerRelease|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.Debug|Win32.Build.0 = Debug|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.FileRelease|Win32.ActiveCfg = FileRelease|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.FileRelease|Win32.Build.0 = FileRelease|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.Release|Win32.ActiveCfg = Release|Win32
 		{678AECD3-8016-4768-96E9-E999D511763B}.Release|Win32.Build.0 = Release|Win32
+		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.CrinklerRelease|Win32.ActiveCfg = CrinklerRelease|Win32
+		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.CrinklerRelease|Win32.Build.0 = CrinklerRelease|Win32
 		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.Debug|Win32.ActiveCfg = Debug|Win32
 		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.Debug|Win32.Build.0 = Debug|Win32
 		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.FileRelease|Win32.ActiveCfg = FileRelease|Win32
 		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.FileRelease|Win32.Build.0 = FileRelease|Win32
-		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.Release|Win32.ActiveCfg = Release|Win32
-		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.Release|Win32.Build.0 = Release|Win32
+		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.Release|Win32.ActiveCfg = FileLite|Win32
+		{5DD3FDBA-0C11-4791-8B9C-7944B01945AD}.Release|Win32.Build.0 = FileLite|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

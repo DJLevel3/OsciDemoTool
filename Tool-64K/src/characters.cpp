@@ -1,424 +1,224 @@
 #include "characters.h"
 
-#define IH_COORDS 2
-const static float coordsIH[] = {
-    0.f,  1.f,
-    0.f, -1.f
+static const char characterVerts[] = {
+    -10, -10, // S (overlaps C/U)
+     10, -10,
+     10,  0,
+    -10,  0,
+    -10,  10,
+     10,  10, // C/U (overlaps S/R)
+    -5,   10,
+    -10,  5,
+    -10, -5,
+    -5,  -10,
+     10, -10, // R (overlaps C/U/A/V)
+    -10,  0,
+     10,  0,
+     10,  10,
+    -10,  10,
+    -10, -10, // A/V (overlaps R/B)
+     0,   10,
+     10, -10,
+     5,   0,
+    -5,   0,
+    -10, -10, // B (overlaps A/V/M/W)
+    -10,  10,
+     6,   10,
+     10,  6,
+     10,  2,
+     8,   0,
+    -10,  0,
+     8,   0,
+     10, -2,
+     10, -6,
+     6,  -10,
+    -10, -10, // M/W (overlaps B)
+    -10,  6,
+    -6,   10,
+    -4,   10,
+     0,   6,
+     0,   0,
+     0,   6,
+     4,   10,
+     6,   10,
+     10,  6,
+     10, -10, // H/I (overlaps M/W/I/Z/N)
+    -10, -10,
+     0,  -10,
+     0,   10,
+     10,  10,
+    -10,  10, // Z/N (overlaps H/I/E)
+     10,  10,
+    -10, -10,
+     10, -10,
+    -10, -10,
+     10,  10,
+    -10,  10,
+     10,  10, // E (overlaps Z/N/T)
+    -10,  10,
+    -10, -10,
+     10, -10,
+    -10, -10,
+    -10,  0,
+     10,  0,
+    -10,  0,
+    -10,  10,
+     10,  10,
+    -10,  10, // T (overlaps E)
+     10,  10,
+     0,   10,
+     0,  -10,
+    -10,  10, // L
+    -10, -10,
+     10, -10,
+    -10,  5,  // O
+    -5,   10,
+     5,   10,
+     10,  5,
+     10, -5,
+     5,  -10,
+    -5,  -10,
+    -10, -5,
+    -10,  5,
+    -5,   10,
+    -10, -10, // K
+    -10,  10,
+    -10,  0,
+     10,  10,
+    -10,  0,
+     10, -10,
 };
-int genCharI(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < IH_COORDS; i++) {
-        vertArray[i * 3] = coordsIH[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsIH[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = IH_COORDS;
-    return 1;
-}/*
-int genCharH(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < IH_COORDS; i++) {
-        vertArray[i * 3] = coordsIH[i * 2 + 1] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsIH[i * 2] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = IH_COORDS;
-    return 1;
-}*/
+static const char vertCounts[26] = {
+    6,  // A
+    12, // B
+    6,  // C
+    0,  // D
+    11, // E
+    0,  // F
+    0,  // G
+    6,  // H
+    6,  // I
+    0,  // J
+    6,  // K
+    3,  // L
+    11, // M
+    8,  // N
+    10,  // O
+    0,  // P
+    0,  // Q
+    6,  // R
+    6,  // S
+    4,  // T
+    6,  // U
+    3,  // V
+    11, // W
+    0,  // X
+    0,  // Y
+    8,  // Z
+};
 
-#define ZN_COORDS 8
-const static float coordsZN[] = {
-    -1.f,  1.f,
-     1.f,  1.f,
-    -1.f, -1.f,
-     1.f, -1.f,
-    -1.f, -1.f,
-     1.f,  1.f,
-    -1.f,  1.f,
-     1.f,  1.f,
-};/*
-int genCharZ(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < ZN_COORDS; i++) {
-        vertArray[i * 3] = coordsZN[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsZN[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = ZN_COORDS;
-    return 1;
-}*/
-int genCharN(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < ZN_COORDS; i++) {
-        vertArray[i * 3] = -coordsZN[i * 2 + 1] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsZN[i * 2] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = ZN_COORDS;
-    return 1;
-}
+// swap, flipX, flipY (applied in that order)
+static const char vertFlipsSwaps[26] = {
+    0b000, // A
+    0b000, // B
+    0b000, // C
+    0b000, // D
+    0b000, // E
+    0b000, // F
+    0b000, // G
+    0b100, // H
+    0b000, // I
+    0b000, // J
+    0b000, // K
+    0b000, // L
+    0b000, // M
+    0b101, // N
+    0b000, // O
+    0b000, // P
+    0b000, // Q
+    0b000, // R
+    0b000, // S
+    0b000, // T
+    0b100, // U
+    0b001, // V
+    0b001, // W
+    0b000, // X
+    0b000, // Y
+    0b000, // Z
+};
 
-
-#define E_COORDS 11
-const static float coordsE[] = {
-    -1.f,  1.f,
-     1.f,  1.f,
-    -1.f,  1.f,
-    -1.f,  0.f,
-     1.f,  0.f,
-    -1.f,  0.f,
-    -1.f, -1.f,
-     1.f, -1.f,
-    -1.f, -1.f,
-    -1.f,  1.f,
-     1.f,  1.f,
+static const char vertOffsets[26] = {
+    15, // A
+    20, // B
+    5,  // C
+    0,  // D
+    53, // E
+    0,  // F
+    0,  // G
+    41, // H
+    41, // I
+    0,  // J
+    80,  // K
+    67, // L
+    31, // M
+    46, // N
+    70, // O
+    0,  // P
+    0,  // Q
+    10, // R
+    0,  // S
+    63, // T
+    5,  // U
+    15, // V
+    31, // W
+    0,  // X
+    0,  // Y
+    46, // Z
 };
-int genCharE(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < E_COORDS; i++) {
-        vertArray[i * 3] = coordsE[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsE[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = E_COORDS;
-    return 1;
-}
-/*
-#define MW_COORDS 11
-const static float coordsMW[] = {
-    -1.0f, -1.0f,
-    -1.0f,  0.6f,
-    -0.6f,  1.0f,
-    -0.4f,  1.0f,
-     0.0f,  0.6f,
-     0.0f,  0.0f,
-     0.0f,  0.6f,
-     0.4f,  1.0f,
-     0.6f,  1.0f,
-     1.0f,  0.6f,
-     1.0f, -1.0f,
-};
-int genCharM(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < MW_COORDS; i++) {
-        vertArray[i * 3] = coordsMW[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsMW[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = MW_COORDS;
-    return 1;
-}
-int genCharW(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < MW_COORDS; i++) {
-        vertArray[i * 3] = coordsMW[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = -coordsMW[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = MW_COORDS;
-    return 1;
-}*/
-
-#define R_COORDS 6
-const static float coordsR[] = {
-    -1.0f, -1.0f,
-    -1.0f,  1.0f,
-     1.0f,  1.0f,
-     1.0f,  0.0f,
-    -1.0f,  0.0f,
-     1.0f, -1.0f,
-};
-int genCharR(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < R_COORDS; i++) {
-        vertArray[i * 3] = coordsR[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsR[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = R_COORDS;
-    return 1;
-}
-
-#define CU_COORDS 6
-const static float coordsCU[] = {
-     1.0f,  1.0f,
-    -0.6f,  1.0f,
-    -1.0f,  0.6f,
-    -1.0f, -0.6f,
-    -0.6f, -1.0f,
-     1.0f, -1.0f
-};
-int genCharC(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < CU_COORDS; i++) {
-        vertArray[i * 3] = coordsCU[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsCU[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = CU_COORDS;
-    return 1;
-}
-/*
-int genCharU(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < CU_COORDS; i++) {
-        vertArray[i * 3] = coordsCU[i * 2 + 1] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsCU[i * 2] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = CU_COORDS;
-    return 1;
-}
-#define B_COORDS 12
-const static float coordsB[] = {
-    -1.0f, -1.0f,
-    -1.0f,  1.0f,
-     0.6f,  1.0f,
-     1.0f,  0.6f,
-     1.0f,  0.2f,
-     0.8f,  0.0f,
-    -1.0f,  0.0f,
-     0.8f,  0.0f,
-     1.0f, -0.2f,
-     1.0f, -0.6f,
-     0.6f, -1.0f,
-    -1.0f, -1.0f,
-};
-int genCharB(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < B_COORDS; i++) {
-        vertArray[i * 3] = coordsB[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsB[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = B_COORDS;
-    return 1;
-}*/
-
-#define A_COORDS 6
-const static float coordsA[] = {
-    -1.0f, -1.0f,
-     0.0f,  1.0f,
-     1.0f, -1.0f,
-     0.5f,  0.0f,
-    -0.5f,  0.0f,
-    -1.0f, -1.0f,
-};
-int genCharA(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < A_COORDS; i++) {
-        vertArray[i * 3] = coordsA[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsA[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = A_COORDS;
-    return 1;
-}/*
-int genCharV(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < 3; i++) {
-        vertArray[i * 3] = coordsA[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsA[i * 2 + 1] * -scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = 3;
-    return 1;
-}*/
-
-#define S_COORDS 6
-const static float coordsS[] = {
-     1.0f,  1.0f,
-    -1.0f,  1.0f,
-    -1.0f,  0.0f,
-     1.0f,  0.0f,
-     1.0f, -1.0f,
-    -1.0f, -1.0f
-};
-int genCharS(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < S_COORDS; i++) {
-        vertArray[i * 3] = coordsS[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsS[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = S_COORDS;
-    return 1;
-}
-int genChar2(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < S_COORDS; i++) {
-        vertArray[i * 3] = coordsS[i * 2] * -scaleX + offX;
-        vertArray[i * 3 + 1] = coordsS[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = S_COORDS;
-    return 1;
-}
-
-#define O_COORDS 9
-const static float coordsO[] = {
-    -1.0f,  0.6f,
-    -0.6f,  1.0f,
-     0.6f,  1.0f,
-     1.0f,  0.6f,
-     1.0f, -0.6f,
-     0.6f, -1.0f,
-    -0.6f, -1.0f,
-    -1.0f, -0.6f,
-    -1.0f,  0.6f
-};
-int genCharO(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < O_COORDS; i++) {
-        vertArray[i * 3] = coordsO[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsO[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = O_COORDS;
-    return 1;
-}
-/*
-#define L_COORDS 3
-const static float coordsL[] = {
-    -1.0f,  1.0f,
-    -1.0f, -1.0f,
-     1.0f, -1.0f
-};
-int genCharL(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < L_COORDS; i++) {
-        vertArray[i * 3] = coordsL[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsL[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = L_COORDS;
-    return 1;
-}
-
-#define T_COORDS 4
-const static float coordsT[] = {
-    -1.0f,  1.0f,
-     1.0f,  1.0f,
-     0.0f,  1.0f,
-     0.0f, -1.0f
-};
-int genCharT(float* vertArray, short* indArray, float scaleX, float scaleY, float offX, float offY)
-{
-    for (int i = 0; i < T_COORDS; i++) {
-        vertArray[i * 3] = coordsT[i * 2] * scaleX + offX;
-        vertArray[i * 3 + 1] = coordsT[i * 2 + 1] * scaleY + offY;
-        vertArray[i * 3 + 2] = 0;
-    }
-    indArray[0] = 0;
-    indArray[1] = T_COORDS;
-    return 1;
-}*/
 
 void drawChar(short* buffer, int samples, char character, float x1, float y1, float x2, float y2)
 {
     float offX = (x1 + x2) / 2;
-    float scaleX = (x2 - x1) / 2;
+    float scaleX = (x2 - x1) / 20;
 
     float offY = (y1 + y2) / 2;
-    float scaleY = (y2 - y1) / 2;
+    float scaleY = (y2 - y1) / 20;
 
     float* strokeVerts = (float*)malloc(3 * MAX_CHAR_VERTS * sizeof(float));
     if (strokeVerts == 0) {
         return;
     }
-    short* strokeIndices = (short*)malloc(2 * MAX_CHAR_STROKES * sizeof(short));
-    if (strokeIndices == 0) {
-        free(strokeVerts);
-        return;
-    }
-    int nStrokes = 0;
-    if (character >= 0x61 && character <= 0x7A) character -= 0x20;
+    int nVerts = 0;
+    int offset = 0;
+    bool swap = 0;
+    int flipX = 0;
+    int flipY = 0;
+    if (character >= 0x30 && character <= 0x39) {
+        // handle numbers
+    } else {
+        character -= 0x41;
+        if (character >= 0x20) character -= 0x20;
 
-    if (character == 'A') {
-        nStrokes = genCharA(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    /*
-    if (character == 'B') {
-        nStrokes = genCharB(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }*/
-    if (character == 'C') {
-        nStrokes = genCharC(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    if (character == 'E') {
-        nStrokes = genCharE(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    } /*
-    case 'H':
-        nStrokes = genCharH(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-        break;*/
-    if (character == 'I') {
-        nStrokes = genCharI(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }/*
-    if (character == 'L') {
-        nStrokes = genCharL(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    case 'M':
-        nStrokes = genCharM(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-        break;*/
-    if (character == 'N') {
-        nStrokes = genCharN(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    if (character == '0') {
-        nStrokes = genCharO(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    if (character == 'R') {
-        nStrokes = genCharR(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    if (character == '5') {
-        nStrokes = genCharS(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    if (character == '2') {
-        nStrokes = genChar2(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }/*
-    if (character == 'T') {
-        nStrokes = genCharT(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    if (character == 'U') {
-        nStrokes = genCharU(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }
-    if (character == 'V') {
-        nStrokes = genCharV(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-    }/*
-    case 'W':
-        nStrokes = genCharW(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-        break;
-    case 'Z':
-        nStrokes = genCharZ(strokeVerts, strokeIndices, scaleX, scaleY, offX, offY);
-        break;*/
+        if (character < 0 || character > 25) goto DONE;
 
-    if (nStrokes > 0) {
-        float sampsPerStroke = samples / nStrokes;
-        int sampsBase = 0;
-        float sampsTarget = 0;
-        for (int i = 0; i < nStrokes; i++) {
-            sampsTarget += sampsPerStroke;
-            strokeToCycle2D(strokeVerts + 3 * strokeIndices[i * 2], strokeIndices[i * 2 + 1], buffer + sampsBase * 2, f2i(sampsTarget - sampsBase));
-            sampsBase += f2i(sampsTarget - sampsBase);
+        nVerts = vertCounts[character];
+        offset = vertOffsets[character];
+        swap = vertFlipsSwaps[character] & 0b100;
+        flipX = 1 - (vertFlipsSwaps[character] & 0b010);
+        flipY = 1 - ((vertFlipsSwaps[character] & 0b001) << 1);
+
+        if (nVerts > 0) {
+            for (int i = 0; i < nVerts; i++) {
+                strokeVerts[i * 3] = offX + scaleX * flipX * (swap ? characterVerts[(i + offset) * 2 + 1] : characterVerts[(i + offset) * 2]);
+                strokeVerts[i * 3 + 1] = offY + scaleY * flipY * (swap ? characterVerts[(i + offset) * 2] : characterVerts[(i + offset) * 2 + 1]);
+                strokeVerts[i * 3 + 2] = 0;
+            }
+
+            strokeToCycle2D(strokeVerts, nVerts, buffer, samples);
         }
     }
 
+DONE:
     free(strokeVerts);
-    free(strokeIndices);
     return;
 }

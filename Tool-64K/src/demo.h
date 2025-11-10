@@ -8,6 +8,7 @@
 #include "config.h"
 #include "tool.h"
 #include "system.h"
+#include "characters.h"
 
 #ifdef SAMPLED_SNARE
 #include "snare.h"
@@ -44,5 +45,5 @@
 
 int   demo_init( int itime );
 float demo_length( int section );
-void  demo_do( long time, short * buffer, int section );
+bool  demo_do( long time, short * buffer, int section );
 void  demo_end( void );

@@ -4,20 +4,16 @@
 
 #include "demo.h"
 
-void intro(short* buffer);
-
-void cube(short* buffer);
-void cubeDrums(short* buffer);
-
-void plasma(short* buffer);
-
-void twister(short* buffer);
-void twisterDrums(short* buffer);
-
-void finale(short* buffer);
+bool intro(short* buffer);
+bool cube(short* buffer);
+bool cubeDrums(short* buffer);
+bool plasma(short* buffer);
+bool ball(short* buffer);
+bool ballDrums(short* buffer);
+bool finale(short* buffer);
 void finaleDrums(short* buffer, bool pulses);
-
-void outro(short* buffer);
+bool outro(short* buffer);
+void pulse(short* buffer, int n);
 
 short* kickBuf;
 short* snareBuf;
@@ -46,21 +42,23 @@ float* twisterVerts;
 #define RISER_SAMPLES 24000
 #define CRASH_RATE 12000
 
-void demo_do(long itime, short* buffer, int section)
+bool demo_do(long itime, short* buffer, int section)
 {
+    bool b = true;
     int DEMO_NUMSAMPLESC = f2i(demo_length(section) * SAMPLE_RATE * 2);
     switch (section) {
     case INTRO_SECTION:
         return intro(buffer);
     case TWISTER_SECTION:
-        return twister(buffer);
+        return ball(buffer);
     case CUBE_SECTION:
         return cube(buffer);
     case PLASMA_SECTION:
         return plasma(buffer);
     case FINALE_SECTION:
-        finale(buffer);
-        return finaleDrums(buffer, false);
+        b = finale(buffer);
+        finaleDrums(buffer, false);
+        return b;
     case OUTRO_SECTION:
         return outro(buffer);
     default:
@@ -524,7 +522,7 @@ const unsigned int hatPattern =     0b00000000010000000000000001000100;
 const unsigned int hatRollPattern = 0b00000100000000000000001000000000;
 const unsigned int cutoutPattern = 0b11111111000010101100111111000000;
 
-void twister(short* buffer) {
+bool ball(short* buffer) {
     int DEMO_NUMSAMPLES = f2i(demo_length(TWISTER_SECTION) * SAMPLE_RATE);
     int s;
     float nextTime = 0;
@@ -541,7 +539,7 @@ void twister(short* buffer) {
     float* line = (float*)malloc(sizeof(float) * 6);
     if (line == 0) {
         memset(buffer, 0, DEMO_NUMSAMPLES * 2);
-        return;
+        return false;
     }
 
     int counter = 0;
@@ -597,22 +595,21 @@ void twister(short* buffer) {
 
         if (GetAsyncKeyState(VK_ESCAPE)) {
             free(line);
-            return;
+            return false;
         }
     }
-    wobbleBufferEnv(buffer + 16 * 2 * SAMPLE_RATE, SAMPLE_RATE * 32,   SAMPLE_RATE * 1.5, 0, 0.f,     0.f, 0.4f, 0.0f, 1.f );
-    wobbleBufferEnv(buffer + 50 * 2 * SAMPLE_RATE, f2i(SAMPLE_RATE * 14), SAMPLE_RATE * 1.5, 0, 2.f / 3, 0.f, 0.4f, 0.0f, 0.5f);
-    wobbleBufferEnv(buffer + 32 * 2 * SAMPLE_RATE, SAMPLE_RATE * 16,   SAMPLE_RATE,       0, 0.f,     0.f, 0.0f, 0.6f, 1.f );
 
     normalizeBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
     free(line);
 
-    twisterDrums(buffer);
+    return ballDrums(buffer);
 }
-void twisterDrums(short* buffer) {
+bool ballDrums(short* buffer) {
     addSamples(buffer, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
 
     int i;
+    bool shouldKick;
+    /*
     // cutouts
     for (i = 768; i < 800; i++) {
         if (!(cutoutPattern & 1 << (31 - (i % 32)))) {
@@ -621,32 +618,20 @@ void twisterDrums(short* buffer) {
                 buffer[j * 2 + 1] = 0;
             }
         }
-    }
+    }*/
     // sidechain
     for (i = 0; i < 512; i++) {
+        shouldKick = false;
         if ((i <= 384 || i >= 400) && (kickPattern & 1 << (15 - (i % 16)))) {
+            shouldKick = true;
             fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 48000, p0d10, p1d00);
-        }
-        else if ((i + 4) % 8 == 0 && i > 128) {
-            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 36000, p0d50, p1d00);
-        }
-    }
-
-    // kick drums
-    for (i = 0; i < 512; i++) {
-        if ((i <= 384 || i >= 400) && (kickPattern & 1 << (15 - (i % 16)))) {
             addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
         }
-    }
-
-    // snare drums
-    for (i = 132; i < 512; i += 8) {
-        addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
-    }
-
-    // hihats
-    for (i = 256; i < 512; i++) {
-        if (i < 384 || i >= 400) {
+        if (i % 8 == 4 && i > 128) {
+            if (!shouldKick) fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 36000, p0d50, p1d00);
+            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
+        }
+        if (i >= 256 && (i < 384 || i >= 400)) {
             if (hatRollPattern & (1 << (31 - (i % 32)))) {
                 addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 4), FILE_RATE / HAT_RATE);
                 addSamples(buffer + ((SAMPLE_RATE >> 3) * i + (SAMPLE_RATE >> 4)) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 5), FILE_RATE / HAT_RATE);
@@ -658,12 +643,16 @@ void twisterDrums(short* buffer) {
                 addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
             }
         }
+        if (GetAsyncKeyState(VK_ESCAPE)) {
+            return false;
+        }
     }
 
     addSamples(buffer + SAMPLE_RATE * 62 * 2, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
+    return true;
 }
 
-void cube(short* buffer) {
+bool cube(short* buffer) {
     int DEMO_NUMSAMPLES = f2i(demo_length(CUBE_SECTION) * SAMPLE_RATE);
     int s;
     float nextTime = 0;
@@ -758,7 +747,7 @@ void cube(short* buffer) {
 
         if (GetAsyncKeyState(VK_ESCAPE)) {
             free(currentStroke);
-            return;
+            return false;
         }
     }
 
@@ -768,39 +757,20 @@ void cube(short* buffer) {
     wobbleBufferEnv(buffer + 8 * SAMPLE_RATE * 2, SAMPLE_RATE * 56, SAMPLE_RATE / 2.0f, 0, 0.f, 2.f / 3, 0.0f, 0.12f, 0.5f);
     normalizeBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
 
-    cubeDrums(buffer);
+    if (GetAsyncKeyState(VK_ESCAPE)) {
+        return false;
+    }
+    
+    return cubeDrums(buffer);
 }
-void cubeDrums(short* buffer){
+bool cubeDrums(short* buffer){
     addSamples(buffer, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
     fadeBuffer(buffer, 48000, p0d10, p1d00);
     addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
     int i;
     int j = 0;
     // arps
-    for (i = 384; i < 512; i++) {
-        if (i % 4 == 2) {
-            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, PULSE_SAMPLES, 0.5f, 1.f);
-            switch (j) {
-            case 0:
-            case 1:
-            case 4:
-            case 5:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse1Buf, PULSE_SAMPLES, 1);
-                break;
-            case 2:
-            case 6:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse2Buf, PULSE_SAMPLES, 1);
-                break;
-            case 3:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse3Buf, PULSE_SAMPLES, 1);
-                break;
-            case 7:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse4Buf, PULSE_SAMPLES, 1);
-                break;
-            }
-        }
-        if (i % 8 == 6) j = (j + 1) % 8;
-    }
+    pulse(buffer + (SAMPLE_RATE * 48) * 2, 128);
 
     // sidechain
     for (i = 192; i < 512; i++) {
@@ -818,6 +788,8 @@ void cubeDrums(short* buffer){
         if (i % 32 == 26) addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
         else addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
     }
+
+    return true;
 }
 
 unsigned char plasmaFunction(short x, short y, float t)
@@ -830,7 +802,7 @@ unsigned char plasmaFunction(short x, short y, float t)
         + 0.4f * (0.3 + cos(sqrtf(xNorm * xNorm * xNorm * xNorm + yNorm2 * yNorm2 * yNorm2 * yNorm2) * 2.f * M_PI + (t * -5.5f)));
     return f2i(255 * min(1.f, max(0.f, f)));
 }
-void plasma(short* buffer) {
+bool plasma(short* buffer) {
     int DEMO_NUMSAMPLES = f2i(demo_length(PLASMA_SECTION) * SAMPLE_RATE);
     int s;
     int nStrokes;
@@ -862,7 +834,7 @@ void plasma(short* buffer) {
 
         short* marker = buffer + 2 * s;
         if (!hilligoss(marker, samples / 2, demo_rand(&seed), timer, 1.f / SAMPLE_RATE, plasmaFunction, 1)) {
-            return;
+            return false;
         }
         s += samples / 2;
         strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES / 2);
@@ -878,6 +850,10 @@ void plasma(short* buffer) {
         freq = mn2f(startFreq + dF * timer);
         nSPC = SAMPLE_RATE / freq;
         nSPS = nSPC / nStrokes - BORDER_SAMPLES;
+
+        if (GetAsyncKeyState(VK_ESCAPE)) {
+            return false;
+        }
     }
 
     normalizeBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
@@ -892,9 +868,11 @@ void plasma(short* buffer) {
     fadeBuffer(buffer, 48000, p0d10, p1d00);
     addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
     addSamples(buffer + SAMPLE_RATE * 10 * 2, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
+
+    return true;
 }
 
-void finale(short* buffer) {
+bool finale(short* buffer) {
     int DEMO_NUMSAMPLES = f2i(demo_length(FINALE_SECTION) * SAMPLE_RATE);
     memset(buffer, 0, DEMO_NUMSAMPLES * 2 * sizeof(short));
     int s;
@@ -921,12 +899,12 @@ void finale(short* buffer) {
     float yPos, theta;
 
     float* currentStroke = (float*)malloc(sizeof(float) * (3 * 5));
-    if (currentStroke == 0) return;
+    if (currentStroke == 0) return false;
 
     float* line = (float*)malloc(sizeof(float) * 6);
     if (line == 0) {
         free(currentStroke);
-        return;
+        return false;
     }
 
     s = 0;
@@ -943,7 +921,7 @@ void finale(short* buffer) {
             if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilligossTimer, 2.f / SAMPLE_RATE, plasmaFunction, 1)) {
                 free(currentStroke);
                 free(line);
-                return;
+                return false;
             }
             s += samples / 2;
             strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES / 2);
@@ -999,7 +977,7 @@ void finale(short* buffer) {
             if (GetAsyncKeyState(VK_ESCAPE)) {
                 free(currentStroke);
                 free(line);
-                return;
+                return false;
             }
         }
 
@@ -1031,50 +1009,30 @@ void finale(short* buffer) {
 
     free(currentStroke);
     free(line);
+
+    return true;
 }
 void finaleDrums(short* buffer, bool pulses) {
     addSamples(buffer, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
     int i;
     if (pulses) {
-        int j = 0;
-        // arps
-        for (i = 0; i < 256; i++) {
-            if (i % 4 == 2) {
-                fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, PULSE_SAMPLES, 0.5f, 1.f);
-                switch (j) {
-                case 0:
-                case 1:
-                case 4:
-                case 5:
-                    addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse1Buf, PULSE_SAMPLES, 1);
-                    break;
-                case 2:
-                case 6:
-                    addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse2Buf, PULSE_SAMPLES, 1);
-                    break;
-                case 3:
-                    addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse3Buf, PULSE_SAMPLES, 1);
-                    break;
-                case 7:
-                    addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse4Buf, PULSE_SAMPLES, 1);
-                    break;
-                }
-            }
-            if (i % 8 == 6) j = (j + 1) % 8;
-        }
+        pulse(buffer, 256);
     }
     else {
         addSamples(buffer + SAMPLE_RATE * 30 * 2, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
     }
-
+    
+    bool shouldKick;
     // sidechain and drums
     for (i = 0; i < 256; i++) {
+        shouldKick = false;
         if ((kickPattern & 1 << (15 - (i % 16)))) {
+            shouldKick = true;
             fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 48000, p0d10, p1d00);
             addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
         }
-        else if (i % 8 == 4) {
-            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 36000, p0d50, p1d00);
+        if (i % 8 == 4) {
+            if (!shouldKick) fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 36000, p0d50, p1d00);
             addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
         }
     }
@@ -1094,18 +1052,25 @@ void finaleDrums(short* buffer, bool pulses) {
     }
 }
 
-void outro(short* buffer)
+bool outro(short* buffer)
 {
-    finale(buffer);
+    if (!finale(buffer)) return false;
     finaleDrums(buffer, true);
     fadeBuffer(buffer + OUTRO_SECONDS * SAMPLE_RATE, OUTRO_SECONDS * SAMPLE_RATE / 2, 1.f, 0.f);
     filterBuffer(buffer, OUTRO_SECONDS * SAMPLE_RATE / 2, p0d85, p0d70, p0d05);
     filterBuffer(buffer + OUTRO_SECONDS * SAMPLE_RATE, OUTRO_SECONDS * SAMPLE_RATE / 2, p0d85, p0d05, 0.001f);
     fadeBuffer(buffer + OUTRO_SECONDS * SAMPLE_RATE * 2 - 24000, 12000, 1.f, 0.f);
+    return true;
 }
 
-void intro(short* buffer) {
+const char* introText = "BACK AT REVISION";
+bool intro(short* buffer) {
     int i;
+    for (i = 0; i < 16; i++) {
+        for (int c = 0; c < f2i(mn2f(42)) / 2; c++) {
+            drawChar(buffer + f2i(SAMPLE_RATE / 2 * i + SAMPLE_RATE * c / mn2f(42)) * 2, f2i(SAMPLE_RATE / mn2f(42)), introText[i], -p0d20, -p0d20, p0d20, p0d20);
+        }
+    }
     // sidechain
     for (i = 0; i < 64; i++) {
         if (i % 4 == 0) {
@@ -1120,8 +1085,42 @@ void intro(short* buffer) {
     // hihats
     for (i = 32; i < 64; i ++) {
         if (i % 32 == 26) addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
+        else if (i % 32 == 24 || i % 32 == 9) {
+            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
+            addSamples(buffer + (SAMPLE_RATE >> 3) + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
+        }
         else addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
     }
 
-    addSamples(buffer + SAMPLE_RATE * 6 * 2, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
+    //addSamples(buffer + SAMPLE_RATE * 6 * 2, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
+    return true;
+}
+
+void pulse(short* buffer, int n) {
+    int j = 0;
+    // arps
+    for (int i = 0; i < n; i++) {
+        if (i % 4 == 2) {
+            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, PULSE_SAMPLES, 0.5f, 1.f);
+            switch (j) {
+            case 0:
+            case 1:
+            case 4:
+            case 5:
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse1Buf, PULSE_SAMPLES, 1);
+                break;
+            case 2:
+            case 6:
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse2Buf, PULSE_SAMPLES, 1);
+                break;
+            case 3:
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse3Buf, PULSE_SAMPLES, 1);
+                break;
+            case 7:
+                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse4Buf, PULSE_SAMPLES, 1);
+                break;
+            }
+        }
+        if (i % 8 == 6) j = (j + 1) % 8;
+    }
 }

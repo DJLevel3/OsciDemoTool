@@ -158,6 +158,8 @@ void addSamples(short* buffer, short* toAdd, int samples, float stretch)
 
         buffer[i * 2] = l;
         buffer[i * 2 + 1] = r;
+
+        if (!(i & 0b10000) && GetAsyncKeyState(VK_ESCAPE)) return;
     }
 }
 
@@ -171,12 +173,16 @@ float normalizeBuffer(short* buffer, int samples, float volume)
         value2 = fabsf(buffer[i * 2 + 1]);
         value1 = max(value1, value2);
         maxValue = max(value1, maxValue);
+
+        if (!(i & 0b10000) && GetAsyncKeyState(VK_ESCAPE)) return 0;
     }
 
     maxValue /= 32767.f;
     for (int i = 0; i < samples; i++) {
         buffer[i * 2] = f2i(buffer[i * 2] * volume / maxValue);
         buffer[i * 2 + 1] = f2i(buffer[i * 2 + 1] * volume / maxValue);
+
+        if (!(i & 0b10000) && GetAsyncKeyState(VK_ESCAPE)) return 0;
     }
 
     return maxValue;
@@ -188,6 +194,8 @@ void fadeBuffer(short* buffer, int samples, float start, float end)
     for (int i = 0; i < samples; i++) {
         buffer[i * 2] = f2i(buffer[i * 2] * (start + i * delta));
         buffer[i * 2 + 1] = f2i(buffer[i * 2 + 1] * (start + i * delta));
+
+        if (!(i & 0b10000) && GetAsyncKeyState(VK_ESCAPE)) return;
     }
 }
 
@@ -198,14 +206,18 @@ void wobbleBufferEnv(short* buffer, int samples, float periodT, int phase, float
         x = buffer[i * 2] / (float)SHRT_MAX;
         y = buffer[i * 2 + 1] / (float)SHRT_MAX;
 
-        wx = sinf(((i + phase) / periodT + scaleX * y) * 2.f * M_PI);
-        wy = sinf(((i + phase) / periodT + scaleY * x) * 2.f * M_PI);
+        wx = sinf(((i + phase) / periodT + scaleX * y) * 2.f * float(M_PI));
+        wy = sinf(((i + phase) / periodT + scaleY * x) * 2.f * float(M_PI));
 
-        ex = (powf(M_E, -curve * x * x)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));
-        ey = (powf(M_E, -curve * y * y)- powf(M_E, -curve)) / (1 - powf(M_E, -curve));
+        ex = (powf(float(M_E), -curve * x * x)- powf(float(M_E), -curve)) / (1 - powf(float(M_E), -curve));
+        ey = (powf(float(M_E), -curve * y * y)- powf(float(M_E), -curve)) / (1 - powf(float(M_E), -curve));
 
         buffer[i * 2] = min(SHRT_MAX, max(SHRT_MIN, buffer[i * 2] + f2i(ex * wx * intensityX * SHRT_MAX)));
         buffer[i * 2 + 1] = min(SHRT_MAX, max(SHRT_MIN, buffer[i * 2 + 1] + f2i(ey * wy * intensityY * SHRT_MAX)));
+
+        if (!(i & 0b10000) && GetAsyncKeyState(VK_ESCAPE)) {
+            return;
+        }
     }
 }
 /*
