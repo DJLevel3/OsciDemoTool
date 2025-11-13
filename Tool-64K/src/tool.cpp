@@ -163,29 +163,15 @@ void addSamples(short* buffer, short* toAdd, int samples, float stretch)
     }
 }
 
-float normalizeBuffer(short* buffer, int samples, float volume)
+float scaleBuffer(short* buffer, int samples, float volume)
 {
-    float maxValue = 0;
-    float value1 = 0;
-    float value2 = 0;
-    for (int i = 0; i < samples; i++) {
-        value1 = fabsf(buffer[i * 2]);
-        value2 = fabsf(buffer[i * 2 + 1]);
-        value1 = max(value1, value2);
-        maxValue = max(value1, maxValue);
+    for (int i = 0; i < samples * 2; i++) {
+        buffer[i] = max(SHRT_MIN, min(SHRT_MAX, f2i(buffer[i] * volume)));
 
         if (!(i & 0b10000) && GetAsyncKeyState(VK_ESCAPE)) return 0;
     }
 
-    maxValue /= 32767.f;
-    for (int i = 0; i < samples; i++) {
-        buffer[i * 2] = f2i(buffer[i * 2] * volume / maxValue);
-        buffer[i * 2 + 1] = f2i(buffer[i * 2 + 1] * volume / maxValue);
-
-        if (!(i & 0b10000) && GetAsyncKeyState(VK_ESCAPE)) return 0;
-    }
-
-    return maxValue;
+    return volume;
 }
 
 void fadeBuffer(short* buffer, int samples, float start, float end)
@@ -206,8 +192,8 @@ void wobbleBufferEnv(short* buffer, int samples, float periodT, int phase, float
         x = buffer[i * 2] / (float)SHRT_MAX;
         y = buffer[i * 2 + 1] / (float)SHRT_MAX;
 
-        wx = sinf(((i + phase) / periodT + scaleX * y) * 2.f * float(M_PI));
-        wy = sinf(((i + phase) / periodT + scaleY * x) * 2.f * float(M_PI));
+        wx = sinf(((i + phase) / periodT + scaleX * y) * 2.f * M_PI_F);
+        wy = sinf(((i + phase) / periodT + scaleY * x) * 2.f * M_PI_F);
 
         ex = (powf(float(M_E), -curve * x * x)- powf(float(M_E), -curve)) / (1 - powf(float(M_E), -curve));
         ey = (powf(float(M_E), -curve * y * y)- powf(float(M_E), -curve)) / (1 - powf(float(M_E), -curve));
@@ -249,9 +235,9 @@ float squareWaveNoDC(int t, int period, float pulseWidth) {
 float squareWaveCentered(int t, int period, float pulseWidth) {
     return ((t % period) <= pulseWidth * period) ? -0.5 : 0.5;
 }
-/*float squareWaveZeroed(int t, int period, float pulseWidth) {
+float squareWaveZeroed(int t, int period, float pulseWidth) {
     return ((t % period) <= pulseWidth * period) ? 0 : 1;
-}*/
+}
 
 float mn2f(float n) {
     return SPEED_FACTOR * 261.63f * powf(2.0f, (n - 60) / 12.f);
@@ -269,8 +255,8 @@ void filterBuffer(short* buffer, int samples, float resonance, float start, floa
     float dt = (end - start) / samples;
     for (int i = 0; i < samples; i++)
     {
-        cut = min(t, 0.9999f);
-        fb = resonance + resonance / (1.0 - cut);
+        cut = max(0.00001, min(t, 0.999f));
+        fb = min(0.9f, resonance + resonance / (1.0 - cut));
 
         state0_L += cut * (buffer[2 * i] - state0_L + fb * (state1_L - state2_L));
         state1_L += cut * (state0_L - state1_L);
@@ -324,6 +310,136 @@ void rotZ(float* src, float* dest, float theta) {
     dest[0] = x;
     dest[1] = y;
     dest[2] = src[2];
+}
+
+
+#define HANDLE_SPECIAL
+void ballify(short* buffer, int samples, float radius, bool clip)
+{
+    float r, t, x, y;
+    for (int i = 0; i < samples; i++) {
+        x = buffer[2 * i];
+        y = buffer[2 * i + 1];
+#ifdef HANDLE_SPECIAL
+        // special cases
+             if (x == 0 && y < 0) t = -M_PI_F / 2;
+        else if (y == 0 && x >= 0) t = 0;
+        else if (x == 0 && y >  0) t = M_PI_F / 2;
+        else if (y == 0 && x <  0) t = M_PI_F;
+        // if everything is positive we're good
+        else
+#endif
+            t = atan2f(y, x);
+        r = sqrtf(x * x + y * y) / SHRT_MAX / radius;
+        if (clip) r = max(-1.f, min(r, 1.f));
+        r = sinf(r * M_PI_F / 2) * SHRT_MAX * radius;
+        buffer[2 * i] = f2i(r * cosf(t));
+        buffer[2 * i + 1] = f2i(r * sinf(t));
+    }
+}
+void addShade(short* buffer, int samples, int period, float amtX, float amtY) {
+    int x, y;
+
+    for (int i = 0; i < samples; i++) {
+        x = f2i(buffer[i * 2] + amtX * SHRT_MAX * sinf(i * 2 * M_PI_F / period));
+        y = f2i(buffer[i * 2 + 1] + amtY * SHRT_MAX * sinf(i * 2 * M_PI_F / period));
+
+        buffer[2 * i] = max(SHRT_MIN, min(x, SHRT_MAX));
+        buffer[2 * i + 1] = max(SHRT_MIN, min(y, SHRT_MAX));
+    }
+}
+void offsetBuffer(short* buffer, int samples, int offX, int offY)
+{
+    for (int i = 0; i < samples; i++) {
+        buffer[i * 2] += offX;
+        buffer[i * 2 + 1] += offY;
+    }
+}
+void offsetBufferCheckered(short* buffer, int samples, int offX, int offY, int period2, int theta, float width)
+{
+    float t;
+    for (int i = 0; i < samples; i++) {
+        t = squareWaveCentered(i + theta, period2, width);
+        buffer[i * 2] += f2i(t * offX);
+        buffer[i * 2 + 1] += f2i(t * offY);
+    }
+}
+void rotateBuffer(short* buffer, int samples, float theta)
+{
+    float sT = sinf(theta);
+    float cT = cosf(theta);
+
+    float x, y;
+
+    for (int i = 0; i < samples; i++) {
+        x = cT * buffer[i * 2] - sT * buffer[i * 2 + 1];
+        y = sT * buffer[i * 2] + cT * buffer[i * 2 + 1];
+        buffer[i * 2] = f2i(x);
+        buffer[i * 2 + 1] = f2i(y);
+    }
+}
+void punchBuffer(short* buffer, int samples, int posX, int posY, float radius)
+{
+    float x, y, x2, y2, r, t;
+
+    for (int i = 0; i < samples; i++) {
+        x = buffer[2 * i];
+        y = buffer[2 * i + 1];
+        x2 = (x - posX) / SHRT_MAX;
+        y2 = (y - posY) / SHRT_MAX;
+        r = sqrtf(x2 * x2 + y2 * y2);
+
+        if (r < radius) {
+#ifdef HANDLE_SPECIAL
+            // special cases
+            if (x2 == 0 && y2 < 0) t = -M_PI_F / 2;
+            else if (y2 == 0 && x2 >= 0) t = 0;
+            else if (x2 == 0 && y2 > 0) t = M_PI_F / 2;
+            else if (y2 == 0 && x2 < 0) t = M_PI_F;
+            // if everything is positive we're good
+            else
+#endif
+                t = atan2f(y2, x2);
+            r = radius;
+            buffer[2 * i] = posX + f2i(SHRT_MAX * r * cosf(t));
+            buffer[2 * i + 1] = posY + f2i(SHRT_MAX * r * sinf(t));
+        }
+
+    }
+}
+void gridBuffer(short* buffer, int samples, float edgeVal, int divisions)
+{
+    int lines = (divisions + 2);
+    float samplesPerLine = float(samples) / lines / 2;
+    int s = 0;
+    int nS = 0;
+    float targ = samplesPerLine;
+    float points[6] = { 0,-1,0,0,1,0 };
+    for (int l = 0; l < lines; l++) {
+        nS = f2i(targ - s);
+        targ += samplesPerLine;
+
+        points[0] = (l * 2.f / (lines - 1)) - 1.f;
+        points[1] = points[1] * (1 - (l % 2) * 2);
+        points[3] = points[0];
+        points[4] = points[4] * (1 - (l % 2) * 2);
+        lineToSamples(points, points + 3, buffer + 2 * s, nS);
+        s += nS;
+    }
+    points[0] = -1.f;
+    points[3] = 1.f;
+    for (int l = 0; l < lines; l++) {
+        nS = f2i(targ - s);
+        targ += samplesPerLine;
+
+        points[0] = points[0] * (1 - (l % 2) * 2);
+        points[1] = (l * 2.f / (lines - 1)) - 1.f;
+        points[3] = points[3] * (1 - (l % 2) * 2);
+        points[4] = points[1];
+        lineToSamples(points, points + 3, buffer + 2 * s, nS);
+        s += nS;
+    }
+    scaleBuffer(buffer, samples, edgeVal);
 }
 
 bool hilligoss(short* buffer, int samples, int randomSeed, float tInitial, float tRate, unsigned char(*gen)(short x, short y, float t), int stretch) {

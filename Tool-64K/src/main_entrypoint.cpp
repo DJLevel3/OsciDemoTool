@@ -107,9 +107,9 @@ void entrypoint(void)
 
     st = timeGetTime();
     while (section < DEMO_SECTIONS && !done) {
-        DEMO_NUMSAMPLESC = f2i(demo_length(section) * SAMPLE_RATE * 2);
+        DEMO_NUMSAMPLESC = f2i((demo_length(section)) * SAMPLE_RATE * 2);
 
-        demoBuffer = (short*)malloc(DEMO_NUMSAMPLESC * sizeof(short));
+        demoBuffer = (short*)malloc((SAMPLE_RATE + DEMO_NUMSAMPLESC) * sizeof(short));
         if (demoBuffer != 0) {
             t = timeGetTime();
             done = !demo_do(t, demoBuffer, section);

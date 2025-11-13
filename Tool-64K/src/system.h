@@ -11,6 +11,8 @@ extern "C" {
 }
 #include "fp.h"
 
+#define M_PI_F (float(M_PI))
+
 static inline int f2i(float x) // use this to convert float to int, or use /QIfist as additional compiler parameters
 {
     int tmp;

@@ -344,7 +344,7 @@
     </Link>
     <Bscmake />
     <PostBuildEvent>
-      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 16 --out .\exe\Tool-64K-kkrunchy.exe</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Run kkrunchy</Message>
@@ -409,7 +409,7 @@
     </Link>
     <Bscmake />
     <PostBuildEvent>
-      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 64 --out .\exe\Tool-64K-kkrunchy.exe</Command>
+      <Command>.\kkrunchy.exe .\exe\$(ProjectName).exe --refsize 16 --out .\exe\Tool-64K-kkrunchy.exe</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Run kkrunchy</Message>
@@ -554,7 +554,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>SAVE_FILE;WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -852,6 +852,7 @@
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\fp.h" />
     <ClInclude Include="src\demo.h" />
+    <ClInclude Include="src\revision-quanitzed.h" />
     <ClInclude Include="src\tool.h" />
     <ClInclude Include="src\system.h" />
   </ItemGroup>

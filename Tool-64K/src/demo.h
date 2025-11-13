@@ -29,9 +29,9 @@
 #else
 #define KICK_RATE 96000
 #define KICK_SAMPLES 12000
-#define KICK_FMAX 165
+#define KICK_FMAX 330
 #define KICK_FBASE 55
-#define KICK_FSTEP 20
+#define KICK_FSTEP 24
 
 #define KICK_START_V p0d50
 #define KICK_FADE_START 1000
