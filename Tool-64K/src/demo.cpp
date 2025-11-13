@@ -1097,7 +1097,7 @@ bool plasma(short* buffer, bool octave) {
         s += BORDER_SAMPLES / 2;
 
         timer += (1.f / freq);
-        hilliTimer += (1.f / freq) + octave / 165.f;
+        hilliTimer += (1.f / freq) + float(octave) / 165.f;
 
         // check pitch and shit
         freq = mn2f(startFreq + dF * timer);
@@ -1512,7 +1512,7 @@ bool textDrums(short* buffer)
 static const char* greetsText[] = {
     "* READY? ***********",
     "* READY? ***********",
-    "*CREDITS ***********",
+    "* READY? ***********",
     "*CREDITS ***********",
     "** CODE **DJ_LEVEL_3",
     "GFX  MUSICDJ_LEVEL_3",
@@ -1533,8 +1533,9 @@ static const char* greetsText[] = {
     "THANK  YOU REVISION ",
     "THANK  YOU REVISION ",
     "TLTYP CORPLOVES YOU ",
-    "TLTYP CORPLOVES YOU ",
     "AMIGAAAAAAAAAAAAAAAA",
+    "READY     ?         ",
+    "READY     ?         ",
 };
 bool greetz(short* buffer)
 {
@@ -1551,7 +1552,7 @@ bool greetz(short* buffer)
     int nStrokes = 21;
     freq = mn2f(38);
     nSPC = SAMPLE_RATE / freq;
-    nSPS = nSPC / nStrokes;
+    nSPS = nSPC / nStrokes; 
     nextTime += SAMPLE_RATE * 2;
 
     int counter = 0;
@@ -1563,6 +1564,7 @@ bool greetz(short* buffer)
     s = 0;
     int sFac;
     bool drawn;
+    char character;
     for (; s + nSPC < (GREETZ_SECONDS - 6) * SAMPLE_RATE;) {
         demo_rand(&seed);
         targetProg += nSPS;
@@ -1571,11 +1573,11 @@ bool greetz(short* buffer)
 
         posX = ((c % 10) * (10 / 9.f) - 5.f) / 9.f - 0.05f;
         posY = (c / 10) * -0.2f + 0.05f;
-        drawChar(buffer + 2 * s, samples, greetsText[min(24, (s / SAMPLE_RATE))][c], (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
+        character = greetsText[min(24, (s / SAMPLE_RATE))][c];
+        drawChar(buffer + 2 * s, samples, (character != '?') || ((s * 4 / SAMPLE_RATE) % 2 == 0) ? character : ' ', (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
         s += samples;
-        c = (c + 1);
-        if (c == 20) {
-            c = 0;
+        c = (c + 1) % 20;
+        if (c == 0) {
             strokeToCycle2D(border, 6, buffer + 2 * s, samples);
             s += samples;
             prog += samples;
@@ -1594,7 +1596,6 @@ bool greetz(short* buffer)
         scaleBuffer(buffer + 2 * s, samples * 2, 1.3f);
 
         s += samples;
-        c = (c + 1) % 6;
     }
     
     scaleBuffer(buffer, DEMO_NUMSAMPLES, 0.45f);
