@@ -19,6 +19,7 @@ bool greetz(short* buffer);
 //bool finale(short* buffer);
 //void finaleDrums(short* buffer, bool pulses);
 bool midSection(short* buffer);
+bool outro(short* buffer);
 //void pulse(short* buffer, int n);
 
 short* kickBuf;
@@ -78,6 +79,8 @@ bool demo_do(long itime, short* buffer, int section)
         return plasma(buffer, 1);
     case TEXT_SECTION:
         return textSection(buffer);
+    case OUTRO_SECTION:
+        return outro(buffer);
     default:
         memset(buffer, 0, DEMO_NUMSAMPLESC * sizeof(short));
     }
@@ -104,6 +107,8 @@ float demo_length(int section)
         return GREETZ_SECONDS;
     case PLASMA2_SECTION:
         return PLASMA2_SECONDS;
+    case OUTRO_SECTION:
+        return OUTRO_SECONDS;
     }
     return 2;
 }
@@ -615,11 +620,11 @@ void demo_end() {
 
 const unsigned short kickPattern =  0b1000001000100100;
 const unsigned int hatPattern =     0b00000000010000000000000001000100;
-const unsigned int hatRollPattern = 0b00000100000000000000001000000000;
+const unsigned int hatRollPattern = 0b00000001000000000010000100000000;
 
 const char sayIt[] = "SAY IT";
 bool ball(short* buffer) {
-    int DEMO_NUMSAMPLES = f2i(demo_length(BALL_SECTION) * SAMPLE_RATE);
+    int DEMO_NUMSAMPLES = f2i(BALL_SECONDS * SAMPLE_RATE);
     int s;
     float nextTime = 0;
     int lastTime = 0;
@@ -664,7 +669,7 @@ bool ball(short* buffer) {
     float nowX;
     float nowY;
 
-    for (; s + nSPC < BALL_SECONDS * SAMPLE_RATE;) {
+    for (; s < DEMO_NUMSAMPLES;) {
         demo_rand(&seed);
         if (counter == 2) {
             targetProg += 6 * nSPS;
@@ -679,25 +684,24 @@ bool ball(short* buffer) {
                 punchBuffer(buffer + 2 * s, samples, f2i(ballPosX * SHRT_MAX), f2i(ballPosY * SHRT_MAX), ballRadius);
             }
             else if (pos < 0.078125f * SAMPLE_RATE || !(ball2Fades & 1 << (15 - (p % 16))) || s >= 48 * SAMPLE_RATE) {
-                nowX = max(0.0f, float(s) / SAMPLE_RATE - 40.f);
-                nowY = max(0.0f, float(s) / SAMPLE_RATE - 40.f - M_PI_F / 6.f);
-                for (int i = 0; i < 3; i++) {
-                    line[0] = sinf(M_PI_F * 2 / 3 * i + nowX);
-                    line[3] = line[0];
-                    line[1] = -1.f;
-                    line[4] = 1.f;
-                    lineToSamples(line, line + 3, buffer + (s + samples * i / 6) * 2, samples / 6);
-                }
-
-                for (int i = 3; i < 6; i++) {
-                    line[1] = sinf(M_PI_F * 2 / 3 * i + nowY);
+                nowX = max(0.0f, float(s) / SAMPLE_RATE - 40.f) / 4.f;
+                for (int i = 0; i < 5; i++) {
+                    line[1] = sinf(M_PI_F * 2 / 5 * i + M_PI_F * nowX);
                     line[4] = line[1];
                     line[0] = -1.f;
                     line[3] = 1.f;
-                    lineToSamples(line, line + 3, buffer + (s + samples * i / 6) * 2, i == 5 ? samples - (samples / 6 * 5) : samples / 6);
+                    lineToSamples(line, line + 3, buffer + (s + samples * i / 10) * 2, samples / 10);
+                }
+
+                for (int i = 5; i < 10; i++) {
+                    line[0] = sinf(M_PI_F * 2 / 5 * i - M_PI_F * nowX);
+                    line[3] = line[0];
+                    line[1] = -1.f;
+                    line[4] = 1.f;
+                    lineToSamples(line, line + 3, buffer + (s + samples * i / 10) * 2, i == 9 ? samples - (samples / 10 * 9) : samples / 10);
                 }
                 if (s >= 48 * SAMPLE_RATE) wobbleBufferEnv(buffer + 2 * s, samples, SAMPLE_RATE / 2.f, s % SAMPLE_RATE, 1.f, 1.f, 0.1f, 0.1f, 0.5f);
-                punchBuffer(buffer + 2 * s, samples, f2i(ballPosX * SHRT_MAX), f2i(ballPosY * SHRT_MAX), ballRadius);
+                punchBuffer(buffer + 2 * s, samples / 2, f2i(ballPosX * SHRT_MAX), f2i(ballPosY * SHRT_MAX), ballRadius);
             }
             counter = (counter + 6) % nStrokes;
             s += samples;
@@ -774,7 +778,13 @@ bool ball(short* buffer) {
             float xAcc = -1.f;
             if (s < SAMPLE_RATE * 32) {
                 ballRadius = BALL_RADIUS_START + ((max(0, (float(s) / SAMPLE_RATE) - 8) / (BALL_SECONDS - 8.f)) * (BALL_RADIUS_END - BALL_RADIUS_START));
+                if (s > SAMPLE_RATE * 24) {
+                    ballRadius += p0d10 * sinf(s * M_PI_F / SAMPLE_RATE / 2);
+                }
                 xAcc = -1.1f;
+            }
+            else if (s > SAMPLE_RATE * 48) {
+                ballRadius = BALL_RADIUS_END + p0d10 * sinf(s * M_PI_F / SAMPLE_RATE / 2);
             }
             timer += 1.f / freq;
             prog -= nSPC;
@@ -791,7 +801,7 @@ bool ball(short* buffer) {
             }
             if (ballPosY < -1.f + ballRadius) {
                 ballPosY -= (ballPosY - ballRadius + 1.f);
-                ballVelY = -ballVelY;
+                ballVelY = -ballVelY + BALL_ACC / 4;
             }
             ballVelY -= BALL_ACC;
             scroller = fmodf((scroller + (ballVelX * BALL_ANGLE_DELTA / fabsf(ballVelX))) + 4.f, 4.f);
@@ -827,6 +837,8 @@ bool ball(short* buffer) {
     return ballDrums(buffer);
 }
 bool ballDrums(short* buffer) {
+    fadeBuffer(buffer, 48000, p0d10, p1d00);
+    addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
     addSamples(buffer, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
     addSamples(buffer + SAMPLE_RATE * 30 * 2, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
     addSamples(buffer + SAMPLE_RATE * 32 * 2, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
@@ -843,11 +855,7 @@ bool ballDrums(short* buffer) {
     // 0010 snares
     // 0001 hats
     short parts = 0;
-    
-    
 
-    fadeBuffer(buffer, 48000, p0d10, p1d00);
-    addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
     for (i = 0; i < 512; i++) {
         if (i == 48 || i == 65) parts ^= KICKS4F;
         if (i == 125) parts ^= KICKSPAT + SNARES;
@@ -926,7 +934,7 @@ bool cube(short* buffer) {
         return false;
     }
     
-    for (; s + nSPC + BORDER_SAMPLES < DEMO_NUMSAMPLES;) {
+    for (; s < DEMO_NUMSAMPLES;) {
         demo_rand(&seed);
         targetProg += nSPS;
         samples = f2i(targetProg - prog);
@@ -1052,8 +1060,20 @@ unsigned char plasmaFunction(short x, short y, float t)
         + sin(t) * sin(xN * 1.5334f + 1.232f * sin(t) + t) * sin(yN * 3.0f + xN * cos(t)));
     return f2i(255 * min(1.f, max(0.f, 1.f - pow(fabsf(f), 1.0f))));
 }
+unsigned char pf2(short x, short y, float iTime)
+{
+    float xN = float(x) / (SHRT_MAX) / 3;
+    float yN = float(y) / (SHRT_MAX) / 3;
+    float xyz[] = { xN, yN, 0 };
+    rotZ(xyz, xyz, sinf((0.2f + xN * sinf(iTime / 5.f) * 0.1f - yN * cosf(iTime * 2.f / 5.f) * 0.1f) * iTime));
+    float x2 = xyz[0] + sinf(iTime) - sinf(iTime * 3.2f + xyz[0] * 8.f) / 4.f;
+    float y2 = xyz[1] + sinf(10.f * xyz[1]) - cos(iTime / 4.f) / 3.f;
+
+    float f = sinf(x2 * 12.f + iTime) + sinf(y2 * 2.f - 3.f * iTime) + cosf((x2 + y2) * 5.f + iTime);
+    return f2i(255 * min(1.f, max(0.f, 1.f - powf(fabsf(f), 4.0f))));
+}
 bool plasma(short* buffer, bool octave) {
-    int DEMO_NUMSAMPLES = f2i((demo_length(octave ? PLASMA2_SECTION : PLASMA_SECTION) - 0.25f * octave) * SAMPLE_RATE);
+    int DEMO_NUMSAMPLES = f2i((demo_length(octave ? PLASMA2_SECTION : PLASMA_SECTION)) * SAMPLE_RATE);
     int s;
     int nStrokes;
     int faces;
@@ -1063,7 +1083,7 @@ bool plasma(short* buffer, bool octave) {
 
     float startFreq = octave ? 26 : 8;
     float endFreq = 26;
-    float dF = (endFreq - startFreq) / DEMO_NUMSAMPLES * SAMPLE_RATE;
+    float dF = (endFreq - startFreq);
     freq = mn2f(startFreq) * (1 + octave);
     nSPC = SAMPLE_RATE / freq;
     nSPS = nSPC / nStrokes - BORDER_SAMPLES;
@@ -1073,11 +1093,11 @@ bool plasma(short* buffer, bool octave) {
     double targetProg = 0;
     int samples;
     float timer = 0;
-    float hilliTimer = PLASMA_SECONDS * octave;
+    float hilliTimer = 0;
 
     s = 0;
 
-    for (; s + nSPS + BORDER_SAMPLES < DEMO_NUMSAMPLES;) {
+    for (; s < DEMO_NUMSAMPLES;) {
         demo_rand(&seed);
         targetProg += nSPS;
         samples = f2i(targetProg - prog);
@@ -1085,7 +1105,7 @@ bool plasma(short* buffer, bool octave) {
 
         short* marker = buffer + 2 * s;
 
-        if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilliTimer, 1.f / SAMPLE_RATE, plasmaFunction, 1)) {
+        if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilliTimer, 1.f / SAMPLE_RATE, octave ? pf2 : plasmaFunction, 1)) {
             return false;
         }
         s += samples / 2;
@@ -1100,7 +1120,7 @@ bool plasma(short* buffer, bool octave) {
         hilliTimer += (1.f / freq) + float(octave) / 165.f;
 
         // check pitch and shit
-        freq = mn2f(startFreq + dF * timer);
+        freq = mn2f(startFreq + dF * min(1.f, (s * 16.f / (16.f  - 2 * octave) / DEMO_NUMSAMPLES)));
         nSPC = SAMPLE_RATE / freq;
         nSPS = nSPC / nStrokes - BORDER_SAMPLES;
 
@@ -1123,7 +1143,7 @@ bool plasma(short* buffer, bool octave) {
         filterBuffer(buffer, DEMO_NUMSAMPLES / 2, 0.55, 0.f, 1.f);
     }
     else {
-        filterBuffer(buffer, DEMO_NUMSAMPLES, 0.55, 1, 0);
+        filterBuffer(buffer, DEMO_NUMSAMPLES, 0.55, 0.8, 0.3f);
     }
     fadeBuffer(buffer, 48000, p0d10, p1d00);
     addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
@@ -1131,220 +1151,46 @@ bool plasma(short* buffer, bool octave) {
     return true;
 }
 
-/*
-#define TWISTER_SEGMENTS 128
-bool finale(short* buffer) {
-    int DEMO_NUMSAMPLES = f2i(demo_length(FINALE_SECTION) * SAMPLE_RATE);
-    memset(buffer, 0, DEMO_NUMSAMPLES * 2 * sizeof(short));
-    return 1;
-    int s;
-    bool object = 0;
-    bool useHilli = 0;
-    float nextTime = 0;
-    int p = 0;
-    float freq = 110;
-    float nSPC, nSPS;
-
-    int nStrokesTwister = TWISTER_SEGMENTS * 3;
-    int nStrokesCube = 6;
-    freq = mn2f(finaleNotes[0]);
-    nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
-    nSPS = nSPC / (object ? nStrokesTwister : nStrokesCube);
-    nextTime += SAMPLE_RATE * 0.5 * finaleNoteTimes[p];
-
-    int counter = 0;
-    double prog = 0;
-    double targetProg = 0;
-    int samples;
-    float timer = 0;
-    double hilligossTimer = 0;
-    float yPos, theta;
-
-    float* currentStroke = (float*)malloc(sizeof(float) * (3 * 5));
-    if (currentStroke == 0) return false;
-
-    float* line = (float*)malloc(sizeof(float) * 6);
-    if (line == 0) {
-        free(currentStroke);
-        return false;
-    }
-
-    s = 0;
-
-    for (; s + nSPS + BORDER_SAMPLES < DEMO_NUMSAMPLES;) {
-        demo_rand(&seed);
-        targetProg += nSPS;
-        samples = f2i(targetProg - prog);
-        prog += samples;
-
-        // render
-        if (useHilli) {
-            short* marker = buffer + 2 * s;
-            if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilligossTimer, 2.f / SAMPLE_RATE, plasmaFunction, 1)) {
-                free(currentStroke);
-                free(line);
-                return false;
-            }
-            s += samples / 2;
-            strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES / 2);
-            s += BORDER_SAMPLES / 2;
-
-            memcpy(buffer + 2 * s, marker, (samples / 2 + BORDER_SAMPLES / 2) * 2 * sizeof(short));
-            s += samples / 2;
-            s += BORDER_SAMPLES / 2;
-
-            hilligossTimer += 2.0 / freq;
-        }
-        else {
-            // pitched shit
-            if (object) {
-                yPos = ballOutlineVerts[counter * 3 + 1];
-
-                theta = timer * 2
-                    + ((timer + 32) / 16.f) * (cosf(timer * 2.0f * M_PI) + 0.5f) * powf(M_E, -0.5 * powf(fmodf(timer, 8.f) - 4.f, 2.0f)) * powf(M_E, -4 * yPos * yPos)
-                    - ((timer - 8.f) / 3.f) * (float(counter % TWISTER_SEGMENTS) / TWISTER_SEGMENTS);
-
-                rotY(ballOutlineVerts + counter * 3, line, theta);
-                rotY(ballOutlineVerts + counter * 3, line + 3, theta);
-                line[4] += twisterHeight;
-
-                if (line[2] > -1 || (line[2] == -1 && line[0] > 0)) { // line is visible
-                    lineToSamples(line, line + 3, buffer + 2 * s, samples);
-                    s += samples;
-                }
-            }
-            else {
-                for (int v = 0; v < 5; v++) {
-                    currentStroke[v * 3 + 0] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 0];
-                    currentStroke[v * 3 + 1] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 1];
-                    currentStroke[v * 3 + 2] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 2];
-                    rotX(currentStroke + v * 3, currentStroke + v * 3, sin(M_PI * timer / 2) * M_PI);
-                    rotY(currentStroke + v * 3, currentStroke + v * 3, M_PI * timer);
-                    rotZ(currentStroke + v * 3, currentStroke + v * 3, M_PI * timer);
-                }
-                strokeToCycle3D(currentStroke, 5, buffer + 2 * s, samples, view_matrix);
-                s += samples;
-            }
-
-            // border
-            counter = (counter + 1) % (object ? (TWISTER_SEGMENTS * 4) : nStrokesCube);
-            if (counter == 0) {
-                prog -= nSPC;
-                targetProg -= nSPC;
-                timer += 1.0 / freq;
-                strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES);
-                s += BORDER_SAMPLES;
-            }
-
-            if (GetAsyncKeyState(VK_ESCAPE)) {
-                free(currentStroke);
-                free(line);
-                return false;
-            }
-        }
-
-        // pitch handling
-        while (s > nextTime) {
-            p++;
-            prog = 0;
-            targetProg = 0;
-            counter = 0;
-
-            if (finaleNotes[p % FINALE_N_PITCHES] != NOFF) {
-                object = !object;
-                useHilli = false;
-            }
-            else {
-                useHilli = true;
-            }
-
-            // check pitch and shit
-            if (finaleNotes[p % FINALE_N_PITCHES] == NOFF) freq = mn2f(18);
-            else freq = mn2f(finaleNotes[p % FINALE_N_PITCHES]);
-            nSPC = SAMPLE_RATE / freq - BORDER_SAMPLES;
-            nSPS = nSPC / (useHilli ? 1 : (object ? nStrokesTwister : nStrokesCube));
-            nextTime += SAMPLE_RATE * 0.5f * finaleNoteTimes[p % FINALE_N_TIMES];
-        }
-    }
-
-    scaleBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
-
-    free(currentStroke);
-    free(line);
-
-    return true;
-}
-void finaleDrums(short* buffer, bool pulses) {
-    addSamples(buffer, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
-    int i;
-    if (pulses) {
-        return;
-        pulse(buffer, 256);
-    }
-    else {
-        addSamples(buffer + SAMPLE_RATE * 30 * 2, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
-        return;
-    }
-    
-    bool didKick;
-    // sidechain and drums
-    for (i = 0; i < 256; i++) {
-        didKick = false;
-        if ((kickPattern & 1 << (15 - (i % 16)))) {
-            didKick = true;
-            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 48000, p0d10, p1d00);
-            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
-        }
-        if (i % 8 == 4) {
-            if (!didKick) fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 36000, p0d50, p1d00);
-            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
-        }
-    }
-
-    // hihats
-    for (i = 0; i < 255; i++) {
-        if (hatRollPattern & (1 << (31 - (i % 32)))) {
-            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 4), FILE_RATE / HAT_RATE);
-            addSamples(buffer + ((SAMPLE_RATE >> 3) * i + (SAMPLE_RATE >> 4)) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 5), FILE_RATE / HAT_RATE);
-        }
-        else if (hatPattern & (1 << (31 - (i % 32)))) {
-            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
-        }
-        else {
-            addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
-        }
-    }
-}
-
-bool outro(short* buffer)
-{
-    if (!finale(buffer)) return false;
-    finaleDrums(buffer, true);
-    fadeBuffer(buffer + MID_SECONDS * SAMPLE_RATE, MID_SECONDS * SAMPLE_RATE / 2, 1.f, 0.f);
-    filterBuffer(buffer, MID_SECONDS * SAMPLE_RATE / 2, p0d85, p0d70, p0d05);
-    filterBuffer(buffer + MID_SECONDS * SAMPLE_RATE, MID_SECONDS * SAMPLE_RATE / 2, p0d85, p0d05, 0.001f);
-    fadeBuffer(buffer + MID_SECONDS * SAMPLE_RATE * 2 - 24000, 12000, 1.f, 0.f);
-    return true;
-}
-*/
-
 const unsigned int introMorse = 0b11101010100010001110101110100000;
-const char* introText = "RRRREEEEVVVVIIIISSSSIIIIOOOONNNN";
+const char* introText = "REVISION";
 bool intro(short* buffer) {
     int i;
     int n;
     int c;
-    
-    for (i = 0; i < 16; i++) {
-        n = f2i(mn2f(42) / 2);
+    /*
+    for (i = 0; i < 8; i++) {
+        n = f2i(mn2f(42));
         c = 0;
         for (; c < n / 2; c++) {
-            drawChar(buffer + f2i(SAMPLE_RATE / 2 * i + SAMPLE_RATE * c / mn2f(42)) * 2, f2i(SAMPLE_RATE / mn2f(42)), introText[i * 2], -p0d20, -p0d20, p0d20, p0d20);
+            drawChar(buffer + f2i(SAMPLE_RATE / 2 * i + SAMPLE_RATE * c / mn2f(42)) * 2, f2i(SAMPLE_RATE / mn2f(42)), introText[i], -p0d50, -p0d50, p0d50, p0d50);
         }
-        for (; c < n; c++) {
-            drawChar(buffer + f2i(SAMPLE_RATE / 2 * i + SAMPLE_RATE * c / mn2f(42)) * 2, f2i(SAMPLE_RATE / mn2f(42)), introText[i * 2 + 1], -p0d20, -p0d20, p0d20, p0d20);
-        }
+    }*/
+
+    int nStrokes = 12;
+    float nSPC = SAMPLE_RATE / mn2f(40);
+    float nSPS = nSPC / nStrokes;
+    float targetProg = 0;
+    float prog = 0;
+    int samples = 0;
+    c = 0;
+    
+    int s = 0;
+    for (; s < 8*SAMPLE_RATE;) {
+        demo_rand(&seed);
+        targetProg += nSPS * (3 - c / 2);
+        samples = f2i(targetProg - prog);
+        prog += samples;
+
+        strokeToCycle2D(revisionVerts3D + 3 * revisionOffsets[c], revisionLengths[c], buffer + 2 * s, samples);
+        scaleBuffer(buffer + 2 * s, samples * 2, p1d30);
+
+        s += samples;
+        c = (c + 1) % 6;
     }
+
+    fadeBuffer(buffer, 8 * SAMPLE_RATE, 0.0f, 0.85);
+
+
     for (i = 0; i < 128; i++) {
         if ((introMorse & (1 << 31 - (i % 32))) == 0){
             for (c = 0; c < SAMPLE_RATE >> 3; c++) {
@@ -1354,12 +1200,12 @@ bool intro(short* buffer) {
     }
 
     // sidechain
-    for (i = 0; i < 52; i++) {
+    for (i = 0; i < 54; i++) {
         if (i % 4 == 0) {
             fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, 36000, p0d10, p1d00);
             addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
         }
-        if (i % 8 == 4 && i > 48) {
+        if (i % 8 == 4 && i > 32) {
             addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
         }
     }
@@ -1438,7 +1284,7 @@ bool textSection(short* buffer)
 
     s = 0;
     int sFac;
-    for (; s + nSPC < TEXT_SECONDS * SAMPLE_RATE;) {
+    for (; s < DEMO_NUMSAMPLES;) {
         demo_rand(&seed);
         targetProg += nSPS;
         samples = f2i(targetProg - prog);
@@ -1486,7 +1332,7 @@ bool textSection(short* buffer)
     }
 
     scaleBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
-    filterBuffer(buffer, 4 * SAMPLE_RATE, 0.0f, 0.0f, 0.1f);
+    filterBuffer(buffer, 4 * SAMPLE_RATE, 0.0f, 0.05f, 0.1f);
     filterBuffer(buffer + 8 * SAMPLE_RATE, 8 * SAMPLE_RATE, 0.0f, 0.1f, 0.5f);
     filterBuffer(buffer + 24 * SAMPLE_RATE, 4 * SAMPLE_RATE, 0.0f, 0.5f, 1.f);
 
@@ -1510,14 +1356,18 @@ bool textDrums(short* buffer)
 }
 
 static const char* greetsText[] = {
-    "* READY? ***********",
-    "* READY? ***********",
-    "* READY? ***********",
-    "*CREDITS ***********",
-    "** CODE **DJ_LEVEL_3",
+    "READY     C?        ",
+    "READY     CR?       ",
+    "READY     CRE?      ",
+    "READY     CRED?     ",
+    "READY     CREDI?    ",
+    "READY     CREDIT?   ",
+    "READY     CREDITS?  ",
+    "READY     CREDITS?  ",
+    "  CODING  DJ_LEVEL_3",
     "GFX  MUSICDJ_LEVEL_3",
-    "CODIRECTORBUS ERROR ",
-    "CODIRECTORTACHY BNKR",
+    "DIRECTION BUS ERROR ",
+    "DIRECTION TACHY BNKR",
     "** PLUS ** THE EPIC ",
     "BUS ERROR COLLECTIVE",
     "*BUS ERROR*DJ_LVL_3 ",
@@ -1525,16 +1375,16 @@ static const char* greetsText[] = {
     "*TACHY     BUNKER   ",
     "*BRENDEN  *ANTHONY  ",
     "* GREETS **** TO ***",
-    "* GREETS **** TO ***",
     "*TRSI     *FAIRLIGHT",
     "*DANKO    *ASTAROTH ",
-    "*PSENOUGH *LILAC    ",
+    "*PSENOUGH *GARGAJ   ",
+    "*MRSBEANBG*LILAC    ",
     "*JAMES H   BALL     ",
-    "THANK  YOU REVISION ",
-    "THANK  YOU REVISION ",
-    "TLTYP CORPLOVES YOU ",
-    "AMIGAAAAAAAAAAAAAAAA",
-    "READY     ?         ",
+    "  TO OUR    FRENDZ  ",
+    " AND OUR    HEROES  ",
+    "ENJOY  THE   SHOW   ",
+    "ENJOY  THE   SHOW   ",
+    "READY     LOAD DEMO?",
     "READY     ?         ",
 };
 bool greetz(short* buffer)
@@ -1543,16 +1393,13 @@ bool greetz(short* buffer)
     int s;
     float nextTime = 0;
     int p = 0;
-    float freq = 110;
-    float nSPC, nSPS;
     int c = 0;
     float posX;
     float posY;
 
-    int nStrokes = 21;
-    freq = mn2f(38);
-    nSPC = SAMPLE_RATE / freq;
-    nSPS = nSPC / nStrokes; 
+    const int nStrokes = 24;
+    const float nSPC = SAMPLE_RATE / mn2f(28);
+    const float nSPS = nSPC / nStrokes; 
     nextTime += SAMPLE_RATE * 2;
 
     int counter = 0;
@@ -1565,7 +1412,7 @@ bool greetz(short* buffer)
     int sFac;
     bool drawn;
     char character;
-    for (; s + nSPC < (GREETZ_SECONDS - 6) * SAMPLE_RATE;) {
+    for (; s < GREETZ_SECONDS * SAMPLE_RATE;) {
         demo_rand(&seed);
         targetProg += nSPS;
         samples = f2i(targetProg - prog);
@@ -1573,36 +1420,24 @@ bool greetz(short* buffer)
 
         posX = ((c % 10) * (10 / 9.f) - 5.f) / 9.f - 0.05f;
         posY = (c / 10) * -0.2f + 0.05f;
-        character = greetsText[min(24, (s / SAMPLE_RATE))][c];
+        character = greetsText[min(28, max(0,min(4, ((s + SAMPLE_RATE / 2) / SAMPLE_RATE))) + (s / SAMPLE_RATE))][c];
         drawChar(buffer + 2 * s, samples, (character != '?') || ((s * 4 / SAMPLE_RATE) % 2 == 0) ? character : ' ', (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
         s += samples;
         c = (c + 1) % 20;
         if (c == 0) {
-            strokeToCycle2D(border, 6, buffer + 2 * s, samples);
-            s += samples;
-            prog += samples;
-            targetProg += nSPS;
+            strokeToCycle2D(border, 6, buffer + 2 * s, samples * 4);
+            s += samples * 4;
+            prog += samples * 4;
+            targetProg += nSPS * 4;
         }
     }
-    nStrokes = 12;
-    nSPS = nSPC / nStrokes;
-    for (; s + nSPC < (GREETZ_SECONDS)*SAMPLE_RATE;) {
-        demo_rand(&seed);
-        targetProg += nSPS * (3 - c / 2);
-        samples = f2i(targetProg - prog);
-        prog += samples;
-
-        strokeToCycle2D(revisionVerts3D + 3 * revisionOffsets[c], revisionLengths[c], buffer + 2 * s, samples);
-        scaleBuffer(buffer + 2 * s, samples * 2, 1.3f);
-
-        s += samples;
-    }
+    
     
     scaleBuffer(buffer, DEMO_NUMSAMPLES, 0.45f);
 
     // hihats
     int i;
-    for (i = 0; i < 88; i++) {
+    for (i = 0; i <= 92; i++) {
         if (i % 16 == 13) addSamples(buffer + ((SAMPLE_RATE >> 2) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
         else if (i % 8 == 3) {
             addSamples(buffer + ((SAMPLE_RATE >> 2) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
@@ -1615,13 +1450,12 @@ bool greetz(short* buffer)
     filterBuffer(buffer + 50 * SAMPLE_RATE, SAMPLE_RATE, 0.3, 1.0f, 0.5f);
     filterBuffer(buffer + 52 * SAMPLE_RATE, SAMPLE_RATE, 0.3, 0.5f, 0.25f);
     filterBuffer(buffer + 54 * SAMPLE_RATE, SAMPLE_RATE, 0.3, 0.25f, 0.0f);*/
-    filterBuffer(buffer + 52 * SAMPLE_RATE, SAMPLE_RATE * 8, 0.0, 1.f, 0.0f);
+    //filterBuffer(buffer + 48 * SAMPLE_RATE, SAMPLE_RATE * 4, 0.0, 1.f, 0.0f);
 
     fadeBuffer(buffer, 48000, p0d10, p1d00);
     addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
 
     addSamples(buffer + 52 * SAMPLE_RATE, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
-    addSamples(buffer + 28 * SAMPLE_RATE * 2, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
 
     return true;
 }
@@ -1667,7 +1501,7 @@ bool midSection(short* buffer) {
         return false;
     }
 
-    for (; s + nSPC + BORDER_SAMPLES < DEMO_NUMSAMPLES;) {
+    for (; s < DEMO_NUMSAMPLES;) {
         demo_rand(&seed);
         targetProg += nSPS;
         samples = f2i(targetProg - prog);
@@ -1751,5 +1585,50 @@ bool midSection(short* buffer) {
     if (GetAsyncKeyState(VK_ESCAPE)) {
         return false;
     }
+    return true;
+}
+
+bool outro(short* buffer) {
+
+    int s;
+    int p = 0;
+    int nStrokes = 24;
+    float freq = mn2f(38);
+    float nSPC = SAMPLE_RATE / freq;
+    float nSPS = nSPC / nStrokes;
+    int c = 0;
+    float posX;
+    float posY;
+    double prog = 0;
+    double targetProg = 0;
+    int samples;
+
+    s = 0;
+    char character;
+    for (; s + nSPC < (OUTRO_SECONDS)*SAMPLE_RATE;) {
+        demo_rand(&seed);
+        targetProg += nSPS;
+        samples = f2i(targetProg - prog);
+        prog += samples;
+
+        posX = ((c % 10) * (10 / 9.f) - 5.f) / 9.f - 0.05f;
+        posY = (c / 10) * -0.2f + 0.05f;
+        character = greetsText[29][c];
+        drawChar(buffer + 2 * s, samples, (character != '?') || ((s * 4 / SAMPLE_RATE) % 2 == 0) ? character : ' ', (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
+        s += samples;
+        c = (c + 1) % 20;
+        if (c == 0) {
+            strokeToCycle2D(border, 6, buffer + 2 * s, samples * 4);
+            s += samples * 4;
+            prog += samples * 4;
+            targetProg += nSPS * 4;
+        }
+    }
+
+    scaleBuffer(buffer, OUTRO_SECONDS * SAMPLE_RATE, 0.45f);
+    filterBuffer(buffer, SAMPLE_RATE * 8, 0.0, 1.f, 0.0f);
+    fadeBuffer(buffer, 48000, p0d10, p1d00);
+    addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
+
     return true;
 }

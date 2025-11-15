@@ -109,7 +109,7 @@ void entrypoint(void)
     while (section < DEMO_SECTIONS && !done) {
         DEMO_NUMSAMPLESC = f2i((demo_length(section)) * SAMPLE_RATE * 2);
 
-        demoBuffer = (short*)malloc((SAMPLE_RATE + DEMO_NUMSAMPLESC) * sizeof(short));
+        demoBuffer = (short*)malloc((SAMPLE_RATE * 2 + DEMO_NUMSAMPLESC) * sizeof(short));
         if (demoBuffer != 0) {
             t = timeGetTime();
             done = !demo_do(t, demoBuffer, section);
@@ -140,8 +140,10 @@ void entrypoint(void)
 
 #ifdef SAVE_FILE
     FILE* oFile = fopen("demo.wav", "wb");
-    fwrite(demoAudioA, sizeof(short), SAMPLE_RATE * 2 * AUDIO_SECONDS + 22, oFile);
-    fclose(oFile);
+    if (oFile != NULL) {
+        fwrite(demoAudioA, sizeof(short), SAMPLE_RATE * 2 * AUDIO_SECONDS + 22, oFile);
+        fclose(oFile);
+    }
 #endif
 
     while (!GetAsyncKeyState(VK_ESCAPE) && timeGetTime() < st + 1000 * AUDIO_SECONDS * SPEED_FACTOR + 500) {
