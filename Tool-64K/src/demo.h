@@ -45,5 +45,7 @@
 
 int   demo_init( int itime );
 float demo_length( int section );
-bool  demo_do( long time, short * buffer, int section );
+bool  demo_do( long time, short * buffer, int section, bool easterEgg );
 void  demo_end( void );
+
+void secretFound(short* buffer);

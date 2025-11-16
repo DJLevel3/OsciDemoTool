@@ -91,6 +91,7 @@ void entrypoint(void)
     int DEMO_NUMSAMPLESC;
 
     bool done = 0;
+    bool easterEgg = false;
     long t = timeGetTime();
     long st = 0;
     // init and build the demo
@@ -112,7 +113,7 @@ void entrypoint(void)
         demoBuffer = (short*)malloc((SAMPLE_RATE * 2 + DEMO_NUMSAMPLESC) * sizeof(short));
         if (demoBuffer != 0) {
             t = timeGetTime();
-            done = !demo_do(t, demoBuffer, section);
+            done = !demo_do(t, demoBuffer, section, easterEgg);
             memcpy(demoAudioA + writePointer, demoBuffer, DEMO_NUMSAMPLESC * sizeof(short));
             writePointer += DEMO_NUMSAMPLESC;
             free(demoBuffer);
@@ -130,6 +131,14 @@ void entrypoint(void)
                     free(demoAudioA);
                     ExitProcess(-3);
                 }
+            }
+            for (int i = 0; i < 100 && !easterEgg && !done; i++) {
+                Sleep(20);
+                if (GetAsyncKeyState(VK_SHIFT)) {
+                    easterEgg = true;
+                    secretFound(demoAudioA + fileCounter * 2 + (CHUNK_SIZE * 4));
+                }
+                done |= GetAsyncKeyState(VK_ESCAPE);
             }
         }
         section++;

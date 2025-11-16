@@ -7,19 +7,19 @@
 
 bool intro(short* buffer);
 
-bool textSection(short* buffer);
+bool textSection(short* buffer, bool easterEgg);
 bool textDrums(short* buffer);
 
-bool cube(short* buffer);
+bool cube(short* buffer, bool easterEgg);
 bool cubeDrums(short* buffer);
-bool plasma(short* buffer, bool octave);
-bool ball(short* buffer);
+bool plasma(short* buffer, bool octave, bool easterEgg);
+bool ball(short* buffer, bool easterEgg);
 bool ballDrums(short* buffer);
-bool greetz(short* buffer);
+bool greetz(short* buffer, bool easterEgg);
 //bool finale(short* buffer);
 //void finaleDrums(short* buffer, bool pulses);
-bool midSection(short* buffer);
-bool outro(short* buffer);
+bool midSection(short* buffer, bool easterEgg);
+bool outro(short* buffer, bool easterEgg);
 //void pulse(short* buffer, int n);
 
 short* kickBuf;
@@ -28,14 +28,9 @@ short* openHatBuf;
 short* closedHatBuf;
 short* crashBuf;
 short* riserBuf;
-/*
-short* pulse1Buf;
-short* pulse2Buf;
-short* pulse3Buf;
-short* pulse4Buf;
-*/
 short* pulseSingleBuf;
 short* pulseSingleBuf2;
+short* pulseSingleBuf3;
 float* ballOutlineVerts;
 float* revisionVerts3D;
 
@@ -54,36 +49,42 @@ float* revisionVerts3D;
 #define RISER_SAMPLES 24000
 #define CRASH_RATE 12000
 
-bool demo_do(long itime, short* buffer, int section)
+bool demo_do(long itime, short* buffer, int section, bool easterEgg)
 {
     bool b = true;
     int DEMO_NUMSAMPLESC = f2i(demo_length(section) * SAMPLE_RATE * 2);
     switch (section) {
     case INTRO_SECTION:
-        return intro(buffer);
+        b = intro(buffer);
+        break;
     case BALL_SECTION:
-        return ball(buffer);
+        b = ball(buffer, easterEgg);
+        break;
     case CUBE_SECTION:
-        return cube(buffer);
+        b = cube(buffer, easterEgg);
+        break;
     case PLASMA_SECTION:
-        return plasma(buffer, 0);
+        b = plasma(buffer, 0, easterEgg);
+        break;
     case GREETZ_SECTION:
-        return greetz(buffer);
-    //case FINALE_SECTION:
-    //    b = finale(buffer);
-    //    finaleDrums(buffer, false);
-    //    return b;
+        b = greetz(buffer, easterEgg);
+        break;
     case MID_SECTION:
-        return midSection(buffer);
+        b = midSection(buffer, easterEgg);
+        break;
     case PLASMA2_SECTION:
-        return plasma(buffer, 1);
+        b = plasma(buffer, 1, easterEgg);
+        break;
     case TEXT_SECTION:
-        return textSection(buffer);
+        b = textSection(buffer, easterEgg);
+        break;
     case OUTRO_SECTION:
-        return outro(buffer);
+        b = outro(buffer, easterEgg);
+        break;
     default:
         memset(buffer, 0, DEMO_NUMSAMPLESC * sizeof(short));
     }
+    return b;
 }
 
 float demo_length(int section)
@@ -97,8 +98,6 @@ float demo_length(int section)
         return CUBE_SECONDS;
     case PLASMA_SECTION:
         return PLASMA_SECONDS;
-    //case FINALE_SECTION:
-    //    return FINALE_SECONDS;
     case MID_SECTION:
         return MID_SECONDS;
     case TEXT_SECTION:
@@ -115,6 +114,17 @@ float demo_length(int section)
 
 //---------------------------------------------------------------------
 #define NOFF 0
+
+static char oneUpNotes[] = {
+    67,
+    66,
+    63,
+    57,
+    56,
+    64,
+    68,
+    72
+};
 
 static float border[] = {
     -1.f,  1.f, 0.f,
@@ -319,8 +329,6 @@ static const char ballNotes[BALL_N_PITCHES] = {
     54,
 };
 
-
-
 static const unsigned short ball2Fades = 0b0111111001111110;
 
 #define CUBE_N_PITCHES 16
@@ -373,31 +381,6 @@ static const char finaleNotes[FINALE_N_PITCHES] = {
     40
 };
 
-/*
-static const char pulse1Notes[3] = {
-    74,
-    77,
-    81
-};
-
-static const char pulse2Notes[3] = {
-    74,
-    77,
-    82
-};
-
-static const char pulse3Notes[3] = {
-    76,
-    79,
-    82
-};
-
-static const char pulse4Notes[3] = {
-    76,
-    79,
-    84
-};*/
-
 float twisterHeight;
 float rotMatrix1[16];
 static int seed = 0;
@@ -445,8 +428,13 @@ int demo_init( int itime )
     pulseSingleBuf2 = (short*)malloc(sizeof(short) * PULSE_SAMPLES / 2);
     if (pulseSingleBuf2 == 0) goto RETL;
 
+    pulseSingleBuf3 = (short*)malloc(sizeof(short) * PULSE_SAMPLES * 2);
+    if (pulseSingleBuf3 == 0) goto RETM;
+
     revisionVerts3D = (float*)malloc(sizeof(float) * 3 * TOTAL_REVISION_VERTS);
     if (revisionVerts3D == 0) {
+        free(pulseSingleBuf3);
+    RETM:
         free(pulseSingleBuf2);
     RETL:
         free(pulseSingleBuf);
@@ -585,6 +573,15 @@ int demo_init( int itime )
     }
     fadeBuffer(pulseSingleBuf2, PULSE_SAMPLES / 4, 0.6f, 0.f);
 
+    memset(pulseSingleBuf3, 0, PULSE_SAMPLES * 2 * sizeof(short));
+    {
+        for (int s = 0; s < PULSE_SAMPLES; s++) {
+            pulseSingleBuf3[s * 2] = f2i(SHRT_MAX * squareWaveCentered(s, f2i(SAMPLE_RATE / mn2f(68)), 0.85));;
+            pulseSingleBuf3[s * 2 + 1] = f2i(SHRT_MAX * squareWaveCentered(s, f2i(SAMPLE_RATE / mn2f(68)), 0.85));
+        }
+    }
+    fadeBuffer(pulseSingleBuf3, PULSE_SAMPLES, 0.3f, 0.f);
+
     int index = 0;
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < revisionLengths[i]; j++) {
@@ -614,6 +611,7 @@ void demo_end() {
     free(ballOutlineVerts);
     free(pulseSingleBuf);
     free(pulseSingleBuf2);
+    free(pulseSingleBuf3);
     free(riserBuf);
     free(revisionVerts3D);
 }
@@ -622,8 +620,8 @@ const unsigned short kickPattern =  0b1000001000100100;
 const unsigned int hatPattern =     0b00000000010000000000000001000100;
 const unsigned int hatRollPattern = 0b00000001000000000010000100000000;
 
-const char sayIt[] = "SAY IT";
-bool ball(short* buffer) {
+const char* sayIt[2] = { "SAY IT", "ATA RI" };
+bool ball(short* buffer, bool easterEgg) {
     int DEMO_NUMSAMPLES = f2i(BALL_SECONDS * SAMPLE_RATE);
     int s;
     float nextTime = 0;
@@ -735,7 +733,8 @@ bool ball(short* buffer) {
                 strokeToCycle2D(line, 2, buffer + 2 * s, samples);
                 addShade(buffer + 2 * s, samples, 3, 0, ballRadius / 2 / BALL_Y_SEGS);
                 offsetBufferCheckered(buffer + 2 * s, samples, 0, f2i(SHRT_MAX * ballRadius / BALL_Y_SEGS), samples / BALL_X_SEGS, f2i(fmodf(scroller, 1.f) * samples / BALL_X_SEGS), 0.5f);
-                ballify(buffer + 2 * s, samples, ballRadius, true);
+                if (easterEgg) scaleBuffer(buffer + 2 * s, samples, 1.2f);
+                else ballify(buffer + 2 * s, samples, ballRadius, true);
                 rotateBuffer(buffer + 2 * s, samples, BALL_ANGLE);
                 offsetBuffer(buffer + 2 * s, samples, f2i(ballPosX * SHRT_MAX), f2i(ballPosY * SHRT_MAX));
             }
@@ -743,6 +742,10 @@ bool ball(short* buffer) {
                 strokeToCycle2D(revisionVerts3D + 3 * revisionOffsets[(counter - 8) * 2], revisionLengths[(counter - 8) * 2], buffer + 2 * s, samples);
                 strokeToCycle2D(revisionVerts3D + 3 * revisionOffsets[(counter - 8) * 2 + 1], revisionLengths[(counter - 8) * 2 + 1], buffer + 2 * (s + samples), samples);
                 scaleBuffer(buffer + 2 * s, samples * 2, ballRadius * 1.3f);
+                if (easterEgg) {
+                    offsetBuffer(buffer + 2 * s, samples * 2, 0.1f, 0.1f);
+                    wobbleBufferEnv(buffer + 2 * s, samples * 2, SAMPLE_RATE / 2, s, 2, 0, 0.1f, 0.1f, 0.1f);
+                }
                 rotateBuffer(buffer + 2 * s, samples * 2, scroller * M_PI_F / 2.f);
                 offsetBuffer(buffer + 2 * s, samples * 2, f2i(ballPosX * SHRT_MAX), f2i(ballPosY * SHRT_MAX));
                 s += samples;
@@ -761,8 +764,8 @@ bool ball(short* buffer) {
             prog += samples;
             samplesCorrected = f2i(samples * (s >= 12 * SAMPLE_RATE && s < 16 * SAMPLE_RATE) / 18.f);
             for (int i = 0; i < 6 && samplesCorrected > 0; i++) {
-                if (sayIt[i] != ' ') {
-                    drawChar(buffer + 2 * s, samplesCorrected, sayIt[i], (i - 3) * 0.3f, -0.125f + sinf(i * 0.6f + 4.f * s / SAMPLE_RATE) / 15, (i - 3) * 0.3f + 0.25f, 0.125f + sinf(i * 0.6f + 4.f * s / SAMPLE_RATE) / 15);
+                if (sayIt[0][i] != ' ') {
+                    drawChar(buffer + 2 * s, samplesCorrected, sayIt[easterEgg][i], (i - 3) * 0.3f, -0.125f + sinf(i * 0.6f + 4.f * s / SAMPLE_RATE) / 15, (i - 3) * 0.3f + 0.25f, 0.125f + sinf(i * 0.6f + 4.f * s / SAMPLE_RATE) / 15);
                     s += samplesCorrected;
                 }
             }
@@ -893,7 +896,7 @@ bool ballDrums(short* buffer) {
     return true;
 }
 
-bool cube(short* buffer) {
+bool cube(short* buffer, bool easterEgg) {
     int DEMO_NUMSAMPLES = f2i(demo_length(CUBE_SECTION) * SAMPLE_RATE);
     int s;
     float nextTime = 0;
@@ -945,9 +948,9 @@ bool cube(short* buffer) {
                 currentStroke[v * 3 + 0] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 0];
                 currentStroke[v * 3 + 1] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 1];
                 currentStroke[v * 3 + 2] = cubeVerts[3 * cubeIndices[counter * 5 + v] + 2];
-                rotX(currentStroke + v * 3, currentStroke + v * 3, sinf(M_PI_F * timer / 2) * M_PI_F);
-                rotY(currentStroke + v * 3, currentStroke + v * 3, M_PI_F * timer);
-                rotZ(currentStroke + v * 3, currentStroke + v * 3, M_PI_F * timer);
+                rotX(currentStroke + v * 3, currentStroke + v * 3, sinf(M_PI_F * timer / 2) * M_PI_F + easterEgg * s * 4.f / SAMPLE_RATE);
+                rotY(currentStroke + v * 3, currentStroke + v * 3, M_PI_F * timer + easterEgg * s * 4.f / SAMPLE_RATE);
+                rotZ(currentStroke + v * 3, currentStroke + v * 3, M_PI_F * timer + easterEgg * s * 4.f / SAMPLE_RATE);
             }
             strokeToCycle3D(currentStroke, 5, buffer + 2 * s, samples, view_matrix);
             s += samples;
@@ -1020,7 +1023,8 @@ bool cube(short* buffer) {
         return false;
     }
     
-    return cubeDrums(buffer);
+    bool b = cubeDrums(buffer);
+    return b;
 }
 bool cubeDrums(short* buffer){
     addSamples(buffer, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
@@ -1039,8 +1043,8 @@ bool cubeDrums(short* buffer){
             addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, snareBuf, SNARE_SAMPLES, FILE_RATE / SNARE_RATE);
         }
         if (i > 64) {
-            if (i % 16 == 10) addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
-            else addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, min(CLOSEDHAT_SAMPLES, SAMPLE_RATE >> 2), FILE_RATE / HAT_RATE);
+            if (i % 16 == 10) addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, openHatBuf, min(OPENHAT_SAMPLES, SAMPLE_RATE >> 3), FILE_RATE / HAT_RATE);
+            else addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, closedHatBuf, CLOSEDHAT_SAMPLES, FILE_RATE / HAT_RATE);
         }
     }
 
@@ -1072,7 +1076,7 @@ unsigned char pf2(short x, short y, float iTime)
     float f = sinf(x2 * 12.f + iTime) + sinf(y2 * 2.f - 3.f * iTime) + cosf((x2 + y2) * 5.f + iTime);
     return f2i(255 * min(1.f, max(0.f, 1.f - powf(fabsf(f), 4.0f))));
 }
-bool plasma(short* buffer, bool octave) {
+bool plasma(short* buffer, bool octave, bool easterEgg) {
     int DEMO_NUMSAMPLES = f2i((demo_length(octave ? PLASMA2_SECTION : PLASMA_SECTION)) * SAMPLE_RATE);
     int s;
     int nStrokes;
@@ -1084,7 +1088,7 @@ bool plasma(short* buffer, bool octave) {
     float startFreq = octave ? 26 : 8;
     float endFreq = 26;
     float dF = (endFreq - startFreq);
-    freq = mn2f(startFreq) * (1 + octave);
+    freq = mn2f(startFreq);
     nSPC = SAMPLE_RATE / freq;
     nSPS = nSPC / nStrokes - BORDER_SAMPLES;
 
@@ -1108,6 +1112,10 @@ bool plasma(short* buffer, bool octave) {
         if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilliTimer, 1.f / SAMPLE_RATE, octave ? plasmaFunction : pf2, 1)) {
             return false;
         }
+        if (easterEgg) {
+            scaleBuffer(buffer + 2 * s, samples / 2, p0d95 * sqrtf(0.5f));
+            rotateBuffer(buffer + 2 * s, samples / 2, s * freq * freq / 72.f / SAMPLE_RATE);
+        }
         s += samples / 2;
         strokeToCycle2D(border, 6, buffer + 2 * s, BORDER_SAMPLES / 2);
         s += BORDER_SAMPLES / 2;
@@ -1120,7 +1128,7 @@ bool plasma(short* buffer, bool octave) {
         hilliTimer += (1.f / freq) + float(octave) / 165.f;
 
         // check pitch and shit
-        freq = mn2f(startFreq + dF * min(1.f, (s * 16.f / (16.f  - 2 * octave) / DEMO_NUMSAMPLES)));
+        freq = mn2f(startFreq + dF * min(1.f, (s * 16.f / (16.f  - 2 * octave) / DEMO_NUMSAMPLES))) * (1 + easterEgg * (1 - octave)) + (easterEgg * 8) * (1 - octave) * sinf(M_PI_F * s * 3.f / SAMPLE_RATE);
         nSPC = SAMPLE_RATE / freq;
         nSPS = nSPC / nStrokes - BORDER_SAMPLES;
 
@@ -1152,7 +1160,6 @@ bool plasma(short* buffer, bool octave) {
 }
 
 const unsigned int introMorse = 0b11101010100010001110101110100000;
-const char* introText = "REVISION";
 bool intro(short* buffer) {
     int i;
     int n;
@@ -1224,41 +1231,13 @@ bool intro(short* buffer) {
     return true;
 }
 
-/*
-void pulse(short* buffer, int n) {
-    int j = 0;
-    // arps
-    for (int i = 0; i < n; i++) {
-        if (i % 4 == 2) {
-            fadeBuffer(buffer + ((SAMPLE_RATE >> 3) * i) * 2, PULSE_SAMPLES, 0.5f, 1.f);
-            switch (j) {
-            case 0:
-            case 1:
-            case 4:
-            case 5:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse1Buf, PULSE_SAMPLES, 1);
-                break;
-            case 2:
-            case 6:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse2Buf, PULSE_SAMPLES, 1);
-                break;
-            case 3:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse3Buf, PULSE_SAMPLES, 1);
-                break;
-            case 7:
-                addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulse4Buf, PULSE_SAMPLES, 1);
-                break;
-            }
-        }
-        if (i % 8 == 6) j = (j + 1) % 8;
-    }
-}*/
-
-static const char* textCharacters[2] = {
-    " THIS IS   *NOT*  A VECTREX  DEMO   ",
-    "LOAD DEMO         READY    RUN?     "
+static const char* textCharacters[2][2] = {
+    { " THIS IS   *NOT*  A VECTREX  DEMO   ",
+      "LOAD DEMO         READY    RUN?     "},
+    { " THIS IS   *NOT*  A MIGAAAA  AAAA   ",
+      "OSCI MUZK         ROCKS    LMAO     "}
 };
-bool textSection(short* buffer)
+bool textSection(short* buffer, bool easterEgg)
 {
     int DEMO_NUMSAMPLES = f2i(TEXT_SECONDS * SAMPLE_RATE);
     int s;
@@ -1300,10 +1279,13 @@ bool textSection(short* buffer)
             s += samples * sFac;
         }
         else {
-            while (textCharacters[s >= 16 * SAMPLE_RATE][c] == ' ') c = (c + 1) % 36;
+            while (textCharacters[0][s >= 16 * SAMPLE_RATE][c] == ' ') c = (c + 1) % 36;
             posX = ((c % 9) + (s < 16 * SAMPLE_RATE ? c / 27 : 0) / 2.f) / 8.f - 0.5625f + 0.0125;
             posY = (c / 9) / -4.f + 0.25f + 0.0625f + 0.0125;
-            drawChar(buffer + 2 * s, samples, textCharacters[s >= 16 * SAMPLE_RATE][c], (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
+            drawChar(buffer + 2 * s, samples, textCharacters[easterEgg][s >= 16 * SAMPLE_RATE][c], (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
+            if (easterEgg) {
+                rotateBuffer(buffer + 2 * s, samples, -M_PI_F / 2);
+            }
             s += samples;
             c = (c + 1) % 36;
         }
@@ -1342,7 +1324,7 @@ bool textDrums(short* buffer)
 {
     addSamples(buffer, crashBuf, CRASH_SAMPLES, FILE_RATE / CRASH_RATE);
     fadeBuffer(buffer, 48000, p0d10, p1d00);
-    addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
+
     for (int i = 0; i < 128; i++) {
         addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulseSingleBuf2, PULSE_SAMPLES / 4, mn2f(55) / mn2f(textNotes2[(i / 16) % 4]));
         addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulseSingleBuf, PULSE_SAMPLES / 2, mn2f(55) / mn2f(textNotes[i % TEXT_N_PITCHES]));
@@ -1351,6 +1333,8 @@ bool textDrums(short* buffer)
         addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulseSingleBuf2, PULSE_SAMPLES / 4, mn2f(55) / mn2f(textNotes2[3]));
         addSamples(buffer + ((SAMPLE_RATE >> 3) * i) * 2, pulseSingleBuf, PULSE_SAMPLES / 2, mn2f(55) / mn2f(textNotes[i % 16 + 48]));
     }
+
+    addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
     addSamples(buffer + SAMPLE_RATE * 37, riserBuf, RISER_SAMPLES, SAMPLE_RATE / CRASH_RATE);
     return true;
 }
@@ -1386,8 +1370,10 @@ static const char* greetsText[] = {
     "ENJOY  THE   SHOW   ",
     "READY     LOAD DEMO?",
     "READY     ?         ",
+    "ENJOY  THEEASTER EGG",
+    "FUNNY????? ?????????",
 };
-bool greetz(short* buffer)
+bool greetz(short* buffer, bool easterEgg)
 {
     int DEMO_NUMSAMPLES = f2i(GREETZ_SECONDS * SAMPLE_RATE);
     int s;
@@ -1420,8 +1406,13 @@ bool greetz(short* buffer)
 
         posX = ((c % 10) * (10 / 9.f) - 5.f) / 9.f - 0.05f;
         posY = (c / 10) * -0.2f + 0.05f;
-        character = greetsText[min(28, max(0,min(4, ((s + SAMPLE_RATE / 2) / SAMPLE_RATE))) + (s / SAMPLE_RATE))][c];
+        character = min(28, max(0, min(4, ((s + SAMPLE_RATE / 2) / SAMPLE_RATE))) + (s / SAMPLE_RATE));
+        character = greetsText[(easterEgg && (character == 26 || character == 27)) ? 30 : character][c];
         drawChar(buffer + 2 * s, samples, (character != '?') || ((s * 4 / SAMPLE_RATE) % 2 == 0) ? character : ' ', (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
+        if (easterEgg && character != '?') {
+            rotateBuffer(buffer + 2 * s, samples, -p0d10);
+            if (character != ' ') offsetBuffer(buffer + 2 * s, samples, 0, -8192);
+        }
         s += samples;
         c = (c + 1) % 20;
         if (c == 0) {
@@ -1460,7 +1451,7 @@ bool greetz(short* buffer)
     return true;
 }
 
-bool midSection(short* buffer) {
+bool midSection(short* buffer, bool easterEgg) {
     int DEMO_NUMSAMPLES = f2i(demo_length(MID_SECTION) * SAMPLE_RATE);
     int s;
     float nextTime = 0;
@@ -1567,6 +1558,7 @@ bool midSection(short* buffer) {
 
     wobbleBufferEnv(buffer, SAMPLE_RATE * 6, SAMPLE_RATE / 1.5f, 0, 2.f / 3, 0.f, 0.12f, 0.0f, 0.5f);
     wobbleBufferEnv(buffer, SAMPLE_RATE * 6, SAMPLE_RATE / 2.0f, 0, 0.f, 2.f / 3, 0.0f, 0.12f, 0.5f);
+    if (easterEgg) wobbleBufferEnv(buffer, DEMO_NUMSAMPLES, SAMPLE_RATE / 4, 0, 2.f, 2.f, 0.1f, 0.1f, 0.1f);
     scaleBuffer(buffer, DEMO_NUMSAMPLES, p0d45);
 
     for (s = 0; s < 4; s++) {
@@ -1588,7 +1580,7 @@ bool midSection(short* buffer) {
     return true;
 }
 
-bool outro(short* buffer) {
+bool outro(short* buffer, bool easterEgg) {
 
     int s;
     int p = 0;
@@ -1613,8 +1605,12 @@ bool outro(short* buffer) {
 
         posX = ((c % 10) * (10 / 9.f) - 5.f) / 9.f - 0.05f;
         posY = (c / 10) * -0.2f + 0.05f;
-        character = greetsText[29][c];
+        character = greetsText[easterEgg ? 31 : 29][c];
         drawChar(buffer + 2 * s, samples, (character != '?') || ((s * 4 / SAMPLE_RATE) % 2 == 0) ? character : ' ', (posX) * 1.5f, (posY) * 1.5f, (posX + p0d10) * 1.5f, (posY + p0d10) * 1.5f);
+        if (easterEgg) {
+            rotateBuffer(buffer + 2 * s, samples, -p0d10);
+            if (character != ' ') offsetBuffer(buffer + 2 * s, samples, 0, -8192);
+        }
         s += samples;
         c = (c + 1) % 20;
         if (c == 0) {
@@ -1631,4 +1627,12 @@ bool outro(short* buffer) {
     addSamples(buffer, kickBuf, KICK_SAMPLES, FILE_RATE / KICK_RATE);
 
     return true;
+}
+
+void secretFound(short* buffer)
+{
+    for (int i = 0; i < 8; i++) {
+        addSamples(buffer + i * SAMPLE_RATE / 4, pulseSingleBuf3, PULSE_SAMPLES, mn2f(68) / mn2f(24 + oneUpNotes[i]));
+        addSamples(buffer + i * SAMPLE_RATE / 4, pulseSingleBuf3, PULSE_SAMPLES, mn2f(68) / mn2f(24 + oneUpNotes[i]));
+    }
 }
