@@ -1063,7 +1063,7 @@ unsigned char plasmaFunction(short x, short y, float t)
 unsigned char pf2(short x, short y, float iTime)
 {
     float xN = float(x) / (SHRT_MAX) / 3;
-    float yN = float(y) / (SHRT_MAX) / 3;
+    float yN = float(y) / (SHRT_MAX) / 4;
     float xyz[] = { xN, yN, 0 };
     rotZ(xyz, xyz, sinf((0.2f + xN * sinf(iTime / 5.f) * 0.1f - yN * cosf(iTime * 2.f / 5.f) * 0.1f) * iTime));
     float x2 = xyz[0] + sinf(iTime) - sinf(iTime * 3.2f + xyz[0] * 8.f) / 4.f;
@@ -1105,7 +1105,7 @@ bool plasma(short* buffer, bool octave) {
 
         short* marker = buffer + 2 * s;
 
-        if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilliTimer, 1.f / SAMPLE_RATE, octave ? pf2 : plasmaFunction, 1)) {
+        if (!hilligoss(marker, samples / 2, demo_rand(&seed), hilliTimer, 1.f / SAMPLE_RATE, octave ? plasmaFunction : pf2, 1)) {
             return false;
         }
         s += samples / 2;
